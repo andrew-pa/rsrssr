@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>RSRSSR</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div>
+        {% for item in items %}
+            <div class="feed-item">
+                <a href="{{ item.link }}" target="_blank">{{ item.title }}</a>
+                <div class="item-info">
+                <span>{{ item.feed_name }}</span>
+                —
+                <span>{{ item.published | format_date }}</span>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+    <footer>
+        <a href="/feeds">Manage Feeds</a>
+        <div class="info">
+            Processed {{ feed_count }} feeds, {{ item_count }} items in {{ fetch_time }}s
+        </div>
+    </footer>
+</body>
+</html>

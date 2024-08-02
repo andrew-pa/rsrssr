@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>RSRSSR: Manage Feeds</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <h1>Manage RSS Feeds</h1>
+    <form method="POST">
+        <input type="text" name="url" placeholder="RSS Feed URL" required>
+        <button type="submit">Add Feed</button>
+    </form>
+    <ul>
+        {% for feed in feeds %}
+            <li>
+                <a href="{{feed.url}}">{{ feed.url }}</a>
+                <form method="POST" style="display:inline;">
+                    <input type="hidden" name="delete" value="{{ feed.id }}">
+                    <button type="submit">Delete</button>
+                </form>
+            </li>
+        {% endfor %}
+    </ul>
+    <a href="/">Home</a>
+</body>
+</html>
