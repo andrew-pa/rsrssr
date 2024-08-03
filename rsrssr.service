@@ -5,7 +5,7 @@ After=network.target
 [Service]
 WorkingDirectory=/root/rsrssr
 Environment="PATH=/root/rsrssr/venv/bin"
-ExecStart=gunicorn --workers 4 --bind 0.0.0.0:80 server:app
+ExecStart=/root/rsrssr/venv/bin/gunicorn --workers 4 --bind 0.0.0.0:80 server:app
 
 [Install]
 WantedBy=multi-user.target

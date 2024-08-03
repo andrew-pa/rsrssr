@@ -8,10 +8,12 @@
 </head>
 <body>
     <h1>Manage RSS Feeds</h1>
-    <form method="POST">
+    <a href="/">Home</a>
+    <form method="POST" style="margin-top: 1rem;">
         <input type="text" name="url" placeholder="RSS Feed URL" required>
         <button type="submit">Add Feed</button>
     </form>
+    <p style="color:var(--color-subtle);">{{ feeds | length }} feeds total</p>
     <ul>
         {% for feed in feeds %}
             <li>
@@ -23,6 +25,5 @@
             </li>
         {% endfor %}
     </ul>
-    <a href="/">Home</a>
 </body>
 </html>
