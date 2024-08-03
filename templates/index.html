@@ -12,7 +12,12 @@
             <div class="feed-item">
                 <a href="{{ item.link }}" target="_blank">{{ item.title }}</a>
                 <div class="item-info">
-                <span>{{ item.feed_name }}</span>
+                <span>
+                    {{ item.feed_name }}
+                    {% if item.author %}
+                        / {{item.author}}
+                    {% endif %}
+                </span>
                 —
                 <span>{{ item.published | format_date }}</span>
                 </div>

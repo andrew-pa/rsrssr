@@ -33,7 +33,8 @@ def index():
                 'feed_name': parsed_feed.feed.title,
                 'title': entry.title,
                 'link': entry.link,
-                'published': entry.published_parsed
+                'published': entry.published_parsed,
+                'author': entry.get('author', None)
             })
     all_items.sort(key=lambda x: x['published'], reverse=True)
     end_time = time.time()
