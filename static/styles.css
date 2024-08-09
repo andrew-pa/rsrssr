@@ -58,6 +58,13 @@ a:visited {
     color: var(--color-subtle);
 }
 
+.feed-item details {
+    font-size: small;
+    color: var(--color-subtle);
+    display: inline-block;
+    margin-left: 1rem;
+}
+
 footer {
     margin-top: 2rem;
     font-size: small;

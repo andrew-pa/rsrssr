@@ -20,6 +20,10 @@
                 </span>
                 —
                 <span>{{ item.published | format_date }}</span>
+                <details>
+                    <summary>Description</summary>
+                    {{ item.description | safe }}
+                </details>
                 </div>
             </div>
         {% endfor %}
@@ -27,7 +31,7 @@
     <footer>
         <a href="/feeds">Manage Feeds</a>
         <div class="info">
-            Processed {{ feed_count }} feeds, {{ item_count }} items in {{ fetch_time }}s
+            Processed {{ feed_count }} feeds, {{ item_count }} items in {{ fetch_time }}s. {{ failed_feed_count }} feeds failed to parse.
         </div>
     </footer>
 </body>
