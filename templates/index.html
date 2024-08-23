@@ -13,7 +13,7 @@
                 <a href="{{ item.link }}" target="_blank">{{ item.title }}</a>
                 <div class="item-info">
                 <span>
-                    {{ item.feed_name }}
+                    {{ item.feed.title }}
                     {% if item.author %}
                         / {{item.author}}
                     {% endif %}
@@ -31,7 +31,7 @@
     <footer>
         <a href="/feeds">Manage Feeds</a>
         <div class="info">
-            Processed {{ feed_count }} feeds, {{ item_count }} items in {{ fetch_time }}s. {{ failed_feed_count }} feeds failed to parse.
+            {{ updated_feed_count }} feeds updated, {{ failed_feed_count }} feeds failed to update, {{ feed_count }} feeds total. Updated in {{ update_time }}s, rendered in {{ load_time }}s
         </div>
     </footer>
 </body>
