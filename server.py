@@ -16,6 +16,7 @@ class Feed(db.Model):
     title = db.Column(db.String(256), nullable=True)
     etag = db.Column(db.String(128), nullable=True)
     modified = db.Column(db.String(128), nullable=True)
+    last_updated = db.Column(db.DateTime, nullable=True)
     items = db.relationship(
         "Item", backref="feed", lazy=True, cascade="all, delete-orphan"
     )
@@ -40,7 +41,7 @@ with app.app_context():
 @app.template_filter("format_date")
 def format_date(value, format="%d %B %Y, %I:%M %p"):
     if value is None:
-        return ""
+        return None
     return value.strftime(format)
 
 
@@ -48,21 +49,33 @@ def datetime_from_time(t):
     return datetime.fromtimestamp(time.mktime(t))
 
 
+def get_last_published_date(feed):
+    most_recent_item = (
+        db.session.query(Item.published)
+        .filter_by(feed_id=feed.id)
+        .order_by(Item.published.desc())
+        .first()
+    )
+
+    if most_recent_item:
+        return most_recent_item.published
+    else:
+        return datetime.now() - relativedelta(months=2)
+
+
 def update_feed(feed, data):
+    db.session.add(feed)
     feed.title = data.feed.title
     feed.etag = data.get("etag", None)
     feed.modified = data.get("modified", None)
+    feed.last_updated = datetime.now()
     feed_pub_date = data.feed.get(
         "published_parsed", data.feed.get("updated_parsed", time.localtime())
     )
-    most_recent_item = db.session.query(Item.published).filter_by(
-        feed_id=feed.id
-    ).order_by(Item.published.desc()).first() or (
-        datetime.now() - relativedelta(months=2)
-    )
-    db.session.add_all(
+    last_published_date = get_last_published_date(feed)
+    items = list(
         filter(
-            lambda item: item.published >= most_recent_item,
+            lambda item: item.published > last_published_date,
             (
                 Item(
                     title=entry.title or "?",
@@ -81,30 +94,33 @@ def update_feed(feed, data):
             ),
         )
     )
+    db.session.add_all(items)
+    return len(items)
 
 
 def update_feeds():
     num_failed = 0
     num_updated = 0
     num_feeds = 0
+    num_new_items = 0
     for feed in Feed.query:
         num_feeds += 1
         try:
             data = feedparser.parse(feed.url, etag=feed.etag, modified=feed.modified)
             if len(data.entries) > 0:
-                update_feed(feed, data)
+                num_new_items += update_feed(feed, data)
                 num_updated += 1
         except Exception as e:
             print(f"failed to load feed {feed}: {e}")
             num_failed += 1
     db.session.commit()
-    return num_feeds, num_failed, num_updated
+    return num_feeds, num_failed, num_updated, num_new_items
 
 
 @app.route("/")
 def index():
     start_time = time.time()
-    (num_feeds, num_failed, num_updated) = update_feeds()
+    (num_feeds, num_failed, num_updated, num_new_items) = update_feeds()
     update_time = time.time()
     items = db.session.query(Item).order_by(Item.published.desc()).limit(128).all()
     load_time = time.time()
@@ -116,6 +132,7 @@ def index():
         feed_count=num_feeds,
         failed_feed_count=num_failed,
         updated_feed_count=num_updated,
+        new_item_count=num_new_items,
     )
 
 

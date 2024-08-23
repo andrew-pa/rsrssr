@@ -19,7 +19,7 @@
                     {% endif %}
                 </span>
                 —
-                <span>{{ item.published | format_date }}</span>
+                <span>{{ item.published | format_date | default('unknown', true) }}</span>
                 <details>
                     <summary>Description</summary>
                     {{ item.description | safe }}
@@ -31,7 +31,7 @@
     <footer>
         <a href="/feeds">Manage Feeds</a>
         <div class="info">
-            {{ updated_feed_count }} feeds updated, {{ failed_feed_count }} feeds failed to update, {{ feed_count }} feeds total. Updated in {{ update_time }}s, rendered in {{ load_time }}s
+            {{ new_item_count }} new items, {{ updated_feed_count }} feeds updated, {{ failed_feed_count }} failed to update, {{ feed_count }} feeds total. Updated in {{ update_time }}s, loaded in {{ load_time }}s.
         </div>
     </footer>
 </body>

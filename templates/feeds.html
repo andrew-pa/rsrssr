@@ -17,7 +17,7 @@
     <ul>
         {% for feed in feeds %}
             <li>
-                {{ feed.title }} (<a href="{{feed.url}}">{{ feed.url }}</a>)
+                {{ feed.title | default("Unknown", true) }} (<a href="{{feed.url}}">{{ feed.url }}</a>, last updated {{ feed.last_updated | format_date | default("never", true) }})
                 <form method="POST" style="display:inline;">
                     <input type="hidden" name="delete" value="{{ feed.id }}">
                     <button type="submit">Delete</button>

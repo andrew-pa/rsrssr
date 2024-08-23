@@ -75,6 +75,8 @@ footer {
 
 footer a {
     color: var(--color-subtle);
+    flex-shrink: 0;
+    margin-right: 1rem;
 }
 
 .info {
