@@ -29,9 +29,15 @@
         {% endfor %}
     </div>
     <footer>
-        <a href="/feeds">Manage Feeds</a>
-        <div class="info">
-            {{ new_item_count }} new items, {{ updated_feed_count }} feeds updated, {{ failed_feed_count }} failed to update, {{ feed_count }} feeds total. Updated in {{ update_time }}s, loaded in {{ load_time }}s.
+        <div>
+            <a href="/?offset={{ prev_page }}">← </a>
+            <a href="/?offset={{ next_page }}">→ </a>
+        </div>
+        <div style="font-size: small">
+            <a href="/feeds">Manage Feeds</a>
+            <div class="info">
+                {{ new_item_count }} new items, {{ updated_feed_count }} feeds updated, {{ failed_feed_count }} failed to update, {{ feed_count }} feeds total. Updated in {{ update_time }}s, loaded in {{ load_time }}s.
+            </div>
         </div>
     </footer>
 </body>

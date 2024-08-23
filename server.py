@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 import feedparser
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 
 app = Flask(__name__)
@@ -105,6 +105,10 @@ def update_feeds():
     num_new_items = 0
     for feed in Feed.query:
         num_feeds += 1
+        if feed.last_updated is not None and (
+            feed.last_updated - datetime.now()
+        ) < timedelta(minutes=5):
+            continue
         try:
             data = feedparser.parse(feed.url, etag=feed.etag, modified=feed.modified)
             if len(data.entries) > 0:
@@ -117,12 +121,22 @@ def update_feeds():
     return num_feeds, num_failed, num_updated, num_new_items
 
 
+PAGE_SIZE = 48
+
+
 @app.route("/")
 def index():
     start_time = time.time()
     (num_feeds, num_failed, num_updated, num_new_items) = update_feeds()
     update_time = time.time()
-    items = db.session.query(Item).order_by(Item.published.desc()).limit(128).all()
+    offset = request.args.get("offset", default=0, type=int)
+    items = (
+        db.session.query(Item)
+        .order_by(Item.published.desc())
+        .offset(offset)
+        .limit(PAGE_SIZE)
+        .all()
+    )
     load_time = time.time()
     return render_template(
         "index.html",
@@ -133,6 +147,8 @@ def index():
         failed_feed_count=num_failed,
         updated_feed_count=num_updated,
         new_item_count=num_new_items,
+        prev_page=offset - PAGE_SIZE if offset > PAGE_SIZE else 0,
+        next_page=offset + PAGE_SIZE,
     )
 
 

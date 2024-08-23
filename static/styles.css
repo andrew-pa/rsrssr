@@ -67,10 +67,16 @@ a:visited {
 
 footer {
     margin-top: 2rem;
-    font-size: small;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+footer div {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
+    margin-bottom: 0.25rem;
 }
 
 footer a {
