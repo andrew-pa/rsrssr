@@ -34,14 +34,19 @@ def index():
     for feed in feeds:
         try:
             parsed_feed = feedparser.parse(feed.url)
-            feed_pub_date = parsed_feed.feed.get("published_parsed", time.localtime())
+            feed_pub_date = parsed_feed.feed.get(
+                "published_parsed", parsed_feed.get("updated_parsed", time.localtime())
+            )
             for entry in parsed_feed.entries:
                 all_items.append(
                     {
                         "feed_name": parsed_feed.feed.title,
                         "title": entry.title,
                         "link": entry.link,
-                        "published": entry.get("published_parsed", feed_pub_date),
+                        "published": entry.get(
+                            "published_parsed",
+                            entry.get("updated_parsed", feed_pub_date),
+                        ),
                         "description": entry.description,
                         "author": entry.get("author", None),
                     }
