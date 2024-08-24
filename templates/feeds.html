@@ -9,21 +9,45 @@
 <body>
     <h1>Manage RSS Feeds</h1>
     <a href="/">Home</a>
-    <form method="POST" style="margin-top: 1rem;">
-        <input type="text" name="url" placeholder="RSS Feed URL" required>
+    <form method="POST" class="new-feed">
+        <input type="text" name="url" placeholder="New RSS Feed URL" required>
         <button type="submit">Add Feed</button>
     </form>
     <p style="color:var(--color-subtle);">{{ feeds | length }} feeds total</p>
-    <ul>
+    <table>
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>URL</th>
+                <th>Last Updated</th>
+                <th>Has Cache Tag</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
         {% for feed in feeds %}
-            <li>
-                {{ feed.title | default("Unknown", true) }} (<a href="{{feed.url}}">{{ feed.url }}</a>, last updated {{ feed.last_updated | format_date | default("never", true) }})
-                <form method="POST" style="display:inline;">
-                    <input type="hidden" name="delete" value="{{ feed.id }}">
-                    <button type="submit">Delete</button>
-                </form>
-            </li>
+            <tr>
+                <td>
+                    {{ feed.title | default("Unknown", true) }}
+                </td>
+                <td>
+                    <a href="{{feed.url}}">{{ feed.url }}</a>
+                </td>
+                <td>
+                    {{ feed.last_updated | format_date | default("never", true) }}
+                </td>
+                <td>
+                    <input type="checkbox" disabled {% if feed.etag is not none or feed.modified is not none %}checked{% endif %}/>
+                </td>
+                <td>
+                    <form method="POST" style="display:inline;">
+                        <input type="hidden" name="delete" value="{{ feed.id }}">
+                        <button type="submit">Delete</button>
+                    </form>
+                </td>
+            </tr>
         {% endfor %}
-    </ul>
+        </tbody>
+    </table>
 </body>
 </html>

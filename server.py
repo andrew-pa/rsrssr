@@ -105,7 +105,7 @@ def update_feeds():
     num_new_items = 0
     for feed in Feed.query:
         num_feeds += 1
-        if feed.last_updated is not None and (
+        if feed.last_updated is not None and abs(
             feed.last_updated - datetime.now()
         ) < timedelta(minutes=5):
             continue

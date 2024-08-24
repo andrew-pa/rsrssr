@@ -3,6 +3,7 @@
     --color-foreground: #090805;
     --color-visited: #807870;
     --color-subtle: #650;
+    --color-border: #330;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -11,6 +12,7 @@
         --color-foreground: #ffffe0;
         --color-visited: #887850;
         --color-subtle: #650;
+        --color-border: #330;
     }
 }
 
@@ -33,6 +35,19 @@ h1 {
 
 form {
     margin-bottom: 1rem;
+}
+
+.new-feed {
+    margin-top: 1rem;
+    display: flex;
+    justify-content: left;
+}
+.new-feed input[type="text"] {
+    flex-grow: 1;
+}
+.new-feed button {
+    margin-left: 1rem;
+    padding: 0.33rem 0.5rem;
 }
 
 hr {
@@ -89,3 +104,28 @@ footer a {
     color: var(--color-subtle);
     font-style: italic;
 }
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+thead {
+    text-align: left;
+    font-weight: bold;
+}
+
+th, td {
+    padding: 0.33rem;
+}
+
+thead tr:last-of-type {
+    border-bottom: 3px solid var(--color-border);
+}
+tbody tr {
+    border-bottom: 1px solid var(--color-border);
+}
+tbody tr:last-of-type {
+    border-bottom: 3px solid var(--color-border);
+}
+
