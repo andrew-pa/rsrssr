@@ -1,0 +1,8 @@
+[Service]
+Type=oneshot
+WorkingDirectory=/root/rsrssr
+Environment="PATH=/root/rsrssr/venv/bin"
+ExecStart=python update.py
+
+[Install]
+WantedBy=multi-user.target
