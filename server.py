@@ -198,7 +198,7 @@ def graph_update_stats():
         row=2,
         col=2,
     )
-    fig.update_yaxes(title_text="Duration (s)", row=2, col=2)
+    fig.update_yaxes(title_text="Duration (ms)", row=2, col=2)
 
     # Update layout for a clean look
     fig.update_layout(title_text="RSS Updates", showlegend=True, hovermode="x unified")

@@ -1,6 +1,5 @@
 import time
 import feedparser
-import yaml
 from statistics import mean, stdev
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
@@ -38,7 +37,13 @@ def update_feed(session, feed):
     start_time = time.time()
     data = feedparser.parse(feed.url, etag=feed.etag, modified=feed.modified)
     if data.status == 304:
-        return None
+        end_time = time.time()
+        return {
+            "id": feed.id,
+            "num_new_items": 0,
+            "dur": (end_time - start_time) * 1000,
+            "cache_miss": False,
+        }
     session.add(feed)
     feed.title = data.feed.title
     feed.etag = data.get("etag", None)
@@ -71,14 +76,18 @@ def update_feed(session, feed):
     )
     session.add_all(items)
     end_time = time.time()
-    return {"id": feed.id, "num_new_items": len(items), "dur": end_time - start_time}
+    return {
+        "id": feed.id,
+        "num_new_items": len(items),
+        "dur": (end_time - start_time) * 1000,
+        "cache_miss": True,
+    }
 
 
 def update_feeds(session):
     timestamp = datetime.now()
     start_time = time.time()
     num_failed = 0
-    num_fetched = 0
     feeds = session.query(Feed).all()
     feed_update_stats = []
     print(f"updating {len(feeds)} feeds")
@@ -92,10 +101,7 @@ def update_feeds(session):
         ):
             continue
         try:
-            num_fetched += 1
-            stats = update_feed(session, feed)
-            if stats is not None:
-                feed_update_stats.append(stats)
+            feed_update_stats.append(update_feed(session, feed))
         except Exception as e:
             print(f"failed to load feed {feed}: {e}")
             num_failed += 1
@@ -103,11 +109,12 @@ def update_feeds(session):
     end_time = time.time()
     min_feed_stat = min(feed_update_stats, key=lambda s: s["dur"], default=None)
     max_feed_stat = max(feed_update_stats, key=lambda s: s["dur"], default=None)
+    print(feed_update_stats, min_feed_stat, max_feed_stat)
     return UpdateStat(
         timestamp=timestamp,
         num_feeds=len(feeds),
-        num_fetched=num_fetched,
-        num_updated=len(feed_update_stats),
+        num_fetched=len(feed_update_stats),
+        num_updated=sum(1 for s in feed_update_stats if s["cache_miss"]),
         num_failed=num_failed,
         num_new_items=sum(stats["num_new_items"] for stats in feed_update_stats),
         dur_total=end_time - start_time,
