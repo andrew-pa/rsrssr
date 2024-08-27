@@ -75,7 +75,7 @@ def manage_feeds():
         db.session.commit()
         return redirect(url_for("manage_feeds"))
 
-    feeds = db.session.query(Feed).all()
+    feeds = db.session.query(Feed).order_by(Feed.last_updated.desc()).all()
     return render_template("feeds.html", feeds=feeds)
 
 
