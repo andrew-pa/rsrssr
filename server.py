@@ -66,7 +66,7 @@ def index():
 def manage_feeds():
     if request.method == "POST":
         if "delete" in request.form:
-            feed = Feed.query.get(request.form["delete"])
+            feed = db.session.query(Feed).get(request.form["delete"])
             db.session.delete(feed)
         else:
             new_feed = Feed(url=request.form["url"])

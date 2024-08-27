@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, Float, String, Text, DateTime, ForeignKey
 from sqlalchemy.orm import relationship, declarative_base
 
 Base = declarative_base()
@@ -36,10 +36,10 @@ class UpdateStat(Base):
     num_updated = Column(Integer, nullable=False)
     num_failed = Column(Integer, nullable=False)
     num_new_items = Column(Integer, nullable=False)
-    dur_total = Column(Integer, nullable=False)
-    dur_min_feed = Column(Integer, nullable=False)
-    dur_min_feed_id = Column(Integer, ForeignKey("feed.id"), nullable=True)
-    dur_avg_feed = Column(Integer, nullable=False)
-    dur_std_feed = Column(Integer, nullable=False)
-    dur_max_feed = Column(Integer, nullable=False)
-    dur_max_feed_id = Column(Integer, ForeignKey("feed.id"), nullable=True)
+    dur_total = Column(Float, nullable=False)
+    dur_min_feed = Column(Float, nullable=False)
+    dur_min_feed_id = Column(Float, ForeignKey("feed.id"), nullable=True)
+    dur_avg_feed = Column(Float, nullable=False)
+    dur_std_feed = Column(Float, nullable=False)
+    dur_max_feed = Column(Float, nullable=False)
+    dur_max_feed_id = Column(Float, ForeignKey("feed.id"), nullable=True)

@@ -45,7 +45,7 @@ def update_feed(session, feed):
             "cache_miss": False,
         }
     session.add(feed)
-    feed.title = data.feed.title
+    feed.title = data.feed.get("title", feed.title or feed.url)
     feed.etag = data.get("etag", None)
     feed.modified = data.get("modified", None)
     feed.last_updated = datetime.now()
@@ -58,8 +58,10 @@ def update_feed(session, feed):
             lambda item: item.published > last_published_date,
             (
                 Item(
-                    title=entry.title or "?",
-                    link=entry.link,
+                    title=entry.get("title", entry.get("link", "Untitled Item")),
+                    link=entry.get(
+                        "link", 'javascript:alert("no link provided for item")'
+                    ),
                     published=datetime_from_time(
                         entry.get(
                             "published_parsed",
@@ -103,13 +105,12 @@ def update_feeds(session):
         try:
             feed_update_stats.append(update_feed(session, feed))
         except Exception as e:
-            print(f"failed to load feed {feed}: {e}")
+            print(f"failed to load feed #{feed.id} ({feed.url}): {e}")
             num_failed += 1
     session.commit()
     end_time = time.time()
     min_feed_stat = min(feed_update_stats, key=lambda s: s["dur"], default=None)
     max_feed_stat = max(feed_update_stats, key=lambda s: s["dur"], default=None)
-    print(feed_update_stats, min_feed_stat, max_feed_stat)
     return UpdateStat(
         timestamp=timestamp,
         num_feeds=len(feeds),
