@@ -1,5 +1,8 @@
 flask
 flask_sqlalchemy
+sqlalchemy
 feedparser
 gunicorn
 python-dateutil
+pandas
+plotly

@@ -36,7 +36,8 @@
         <div style="font-size: small">
             <a href="/feeds">Manage Feeds</a>
             <div class="info">
-                {{ new_item_count }} new items, {{ updated_feed_count }} feeds updated, {{ failed_feed_count }} failed to update, {{ feed_count }} feeds total. Updated in {{ update_time }}s, loaded in {{ load_time }}s.
+                Last updated in {{ update_time }}s on {{ last_update | format_date }} ({{ new_item_count }} new items from {{ feed_count }} feeds).
+                Loaded now in {{ load_time }}s.
             </div>
         </div>
     </footer>

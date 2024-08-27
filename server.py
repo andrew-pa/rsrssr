@@ -1,41 +1,22 @@
+import time
 from flask import Flask, render_template, request, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
-import feedparser
-import time
-from datetime import datetime, timedelta
-from dateutil.relativedelta import relativedelta
+
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+import plotly.io
+import pandas as pd
+
+from update import update_feed
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///rss_feeds.db"
 db = SQLAlchemy(app)
 
-
-class Feed(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    url = db.Column(db.String(512), nullable=False)
-    title = db.Column(db.String(256), nullable=True)
-    etag = db.Column(db.String(128), nullable=True)
-    modified = db.Column(db.String(128), nullable=True)
-    last_updated = db.Column(db.DateTime, nullable=True)
-    items = db.relationship(
-        "Item", backref="feed", lazy=True, cascade="all, delete-orphan"
-    )
-
-
-class Item(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(256), nullable=False)
-    link = db.Column(db.String(512), nullable=False)
-    published = db.Column(db.DateTime, nullable=False, index=True)
-    description = db.Column(db.Text, nullable=True)
-    author = db.Column(db.String(128), nullable=True)
-    feed_id = db.Column(
-        db.Integer, db.ForeignKey("feed.id"), nullable=False, index=True
-    )
-
+from models import Base, Item, Feed, UpdateStat
 
 with app.app_context():
-    db.create_all()
+    Base.metadata.create_all(bind=db.engine)
 
 
 @app.template_filter("format_date")
@@ -45,90 +26,12 @@ def format_date(value, format="%d %B %Y, %I:%M %p"):
     return value.strftime(format)
 
 
-def datetime_from_time(t):
-    return datetime.fromtimestamp(time.mktime(t))
-
-
-def get_last_published_date(feed):
-    most_recent_item = (
-        db.session.query(Item.published)
-        .filter_by(feed_id=feed.id)
-        .order_by(Item.published.desc())
-        .first()
-    )
-
-    if most_recent_item:
-        return most_recent_item.published
-    else:
-        return datetime.now() - relativedelta(months=2)
-
-
-def update_feed(feed, data):
-    db.session.add(feed)
-    feed.title = data.feed.title
-    feed.etag = data.get("etag", None)
-    feed.modified = data.get("modified", None)
-    feed.last_updated = datetime.now()
-    feed_pub_date = data.feed.get(
-        "published_parsed", data.feed.get("updated_parsed", time.localtime())
-    )
-    last_published_date = get_last_published_date(feed)
-    items = list(
-        filter(
-            lambda item: item.published > last_published_date,
-            (
-                Item(
-                    title=entry.title or "?",
-                    link=entry.link,
-                    published=datetime_from_time(
-                        entry.get(
-                            "published_parsed",
-                            entry.get("updated_parsed", feed_pub_date),
-                        )
-                    ),
-                    description=entry.get("description", None),
-                    author=entry.get("author", None),
-                    feed=feed,
-                )
-                for entry in data.entries
-            ),
-        )
-    )
-    db.session.add_all(items)
-    return len(items)
-
-
-def update_feeds():
-    num_failed = 0
-    num_updated = 0
-    num_feeds = 0
-    num_new_items = 0
-    for feed in Feed.query:
-        num_feeds += 1
-        if feed.last_updated is not None and abs(
-            feed.last_updated - datetime.now()
-        ) < timedelta(minutes=5):
-            continue
-        try:
-            data = feedparser.parse(feed.url, etag=feed.etag, modified=feed.modified)
-            if len(data.entries) > 0:
-                num_new_items += update_feed(feed, data)
-                num_updated += 1
-        except Exception as e:
-            print(f"failed to load feed {feed}: {e}")
-            num_failed += 1
-    db.session.commit()
-    return num_feeds, num_failed, num_updated, num_new_items
-
-
 PAGE_SIZE = 48
 
 
 @app.route("/")
 def index():
     start_time = time.time()
-    (num_feeds, num_failed, num_updated, num_new_items) = update_feeds()
-    update_time = time.time()
     offset = request.args.get("offset", default=0, type=int)
     items = (
         db.session.query(Item)
@@ -137,16 +40,23 @@ def index():
         .limit(PAGE_SIZE)
         .all()
     )
+    last_stats = (
+        db.session.query(UpdateStat)
+        .order_by(UpdateStat.timestamp.desc())
+        .limit(1)
+        .first()
+    )
+    if last_stats is None:
+        return "uhoh"
     load_time = time.time()
     return render_template(
         "index.html",
         items=items,
-        load_time=round(load_time - update_time, 3),
-        update_time=round(update_time - start_time, 3),
-        feed_count=num_feeds,
-        failed_feed_count=num_failed,
-        updated_feed_count=num_updated,
-        new_item_count=num_new_items,
+        load_time=round(load_time - start_time, 3),
+        update_time=round(last_stats.dur_total, 3),
+        feed_count=last_stats.num_feeds,
+        new_item_count=last_stats.num_new_items,
+        last_update=last_stats.timestamp,
         prev_page=offset - PAGE_SIZE if offset > PAGE_SIZE else 0,
         next_page=offset + PAGE_SIZE,
     )
@@ -159,14 +69,141 @@ def manage_feeds():
             feed = Feed.query.get(request.form["delete"])
             db.session.delete(feed)
         else:
-            new_feed = Feed()
-            new_feed.url = request.form["url"]
+            new_feed = Feed(url=request.form["url"])
+            update_feed(db.session, new_feed)
             db.session.add(new_feed)
         db.session.commit()
         return redirect(url_for("manage_feeds"))
 
-    feeds = Feed.query.all()
+    feeds = db.session.query(Feed).all()
     return render_template("feeds.html", feeds=feeds)
+
+
+@app.route("/stats")
+def graph_update_stats():
+    data = pd.read_sql_table(UpdateStat.__tablename__, con=db.session.connection())
+    print(data)
+    # Create subplots: 2 rows, 2 columns
+    fig = make_subplots(
+        rows=2,
+        cols=2,
+        subplot_titles=(
+            "Total Update Time and Feed Count",
+            "New Items over Time",
+            "Fetched, Updated, and Failed",
+            "Per-Feed Update Time",
+        ),
+        specs=[
+            [{"secondary_y": True}, {"secondary_y": False}],
+            [{"secondary_y": False}, {"secondary_y": False}],
+        ],
+        shared_xaxes=False,
+        vertical_spacing=0.1,
+        horizontal_spacing=0.1,
+    )
+
+    # Plot 1: dur_total and num_feeds with secondary Y axis
+    fig.add_trace(
+        go.Scatter(
+            x=data["timestamp"],
+            y=data["dur_total"],
+            mode="lines",
+            name="Total Duration",
+        ),
+        row=1,
+        col=1,
+        secondary_y=False,
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=data["timestamp"],
+            y=data["num_feeds"],
+            mode="lines",
+            name="Num Feeds",
+            yaxis="y2",
+        ),
+        row=1,
+        col=1,
+        secondary_y=True,
+    )
+    fig.update_yaxes(title_text="Total Duration (s)", secondary_y=False, row=1, col=1)
+    fig.update_yaxes(title_text="Num Feeds", secondary_y=True, row=1, col=1)
+
+    # Plot 2: num_new_items
+    fig.add_trace(
+        go.Scatter(
+            x=data["timestamp"],
+            y=data["num_new_items"],
+            mode="lines",
+            name="Num New Items",
+        ),
+        row=1,
+        col=2,
+    )
+    fig.update_yaxes(title_text="Num New Items", row=1, col=2)
+
+    # Plot 3: num_fetched, num_updated, num_failed
+    fig.add_trace(
+        go.Scatter(
+            x=data["timestamp"], y=data["num_fetched"], mode="lines", name="Num Fetched"
+        ),
+        row=2,
+        col=1,
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=data["timestamp"], y=data["num_updated"], mode="lines", name="Num Updated"
+        ),
+        row=2,
+        col=1,
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=data["timestamp"], y=data["num_failed"], mode="lines", name="Num Failed"
+        ),
+        row=2,
+        col=1,
+    )
+    fig.update_yaxes(title_text="Num Feeds", row=2, col=1)
+
+    # Plot 4: dur_min_feed, dur_avg_feed, dur_max_feed with error bars for dur_avg_feed
+    fig.add_trace(
+        go.Scatter(
+            x=data["timestamp"],
+            y=data["dur_min_feed"],
+            mode="lines",
+            name="Min Feed Duration",
+        ),
+        row=2,
+        col=2,
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=data["timestamp"],
+            y=data["dur_avg_feed"],
+            mode="lines",
+            name="Avg Feed Duration",
+            error_y=dict(type="data", array=data["dur_std_feed"], visible=True),
+        ),
+        row=2,
+        col=2,
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=data["timestamp"],
+            y=data["dur_max_feed"],
+            mode="lines",
+            name="Max Feed Duration",
+        ),
+        row=2,
+        col=2,
+    )
+    fig.update_yaxes(title_text="Duration (s)", row=2, col=2)
+
+    # Update layout for a clean look
+    fig.update_layout(title_text="RSS Updates", showlegend=True, hovermode="x unified")
+
+    return plotly.io.to_html(fig)
 
 
 @app.route("/static/<path:path>")
