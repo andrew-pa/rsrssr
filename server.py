@@ -81,8 +81,18 @@ def manage_feeds():
 
 @app.route("/stats")
 def graph_update_stats():
-    data = pd.read_sql_table(UpdateStat.__tablename__, con=db.session.connection())
-    print(data)
+    data = pd.read_sql_query(
+        """
+        SELECT
+        update_stats.*,
+        min_feed.url AS min_feed_url,
+        max_feed.url AS max_feed_url
+        FROM update_stats
+        LEFT JOIN feed min_feed ON update_stats.dur_min_feed_id = min_feed.id
+        LEFT JOIN feed max_feed ON update_stats.dur_max_feed_id = max_feed.id
+    """,
+        con=db.session.connection(),
+    )
     # Create subplots: 2 rows, 2 columns
     fig = make_subplots(
         rows=2,
@@ -173,6 +183,8 @@ def graph_update_stats():
             y=data["dur_min_feed"],
             mode="lines",
             name="Min Feed Duration",
+            text=data["min_feed_url"],
+            hovertemplate="%{y}ms; %{text}",
         ),
         row=2,
         col=2,
@@ -194,6 +206,8 @@ def graph_update_stats():
             y=data["dur_max_feed"],
             mode="lines",
             name="Max Feed Duration",
+            text=data["max_feed_url"],
+            hovertemplate="%{y}ms; %{text}",
         ),
         row=2,
         col=2,
