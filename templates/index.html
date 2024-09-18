@@ -8,14 +8,26 @@
 </head>
 <body>
     <div>
+        {% if from_feed %}
+        <div class="from-feed-header">
+            <a href="/">← Back to All Feeds</a>
+            <h1>{{ from_feed.title }}</h1>
+            <p class="info">
+                Last updated: {{ from_feed.last_updated | format_date | default("never", true) }}. Number of items: {{ from_feed.items | length }}.
+            </p>
+        </div>
+        {% endif %}
         {% for item in items %}
             <div class="feed-item">
                 <a href="{{ item.link }}" target="_blank">{{ item.title }}</a>
                 <div class="item-info">
                 <span>
-                    {{ item.feed.title }}
+                    {% if not from_feed %}
+                    <a href="/?feed={{ item.feed_id }}">{{ item.feed.title }}</a>
+                    {% if item.author %} / {% endif %}
+                    {% endif %}
                     {% if item.author %}
-                        / {{item.author}}
+                        {{item.author}}
                     {% endif %}
                 </span>
                 —
@@ -29,12 +41,20 @@
         {% endfor %}
     </div>
     <footer>
-        <div>
+        <div class="pages">
+            {% if from_feed %}
+            <a href="/?feed={{ from_feed.id }}&offset={{ prev_page }}">← </a>
+            <a href="/?feed={{ from_feed.id }}&offset={{ next_page }}">→ </a>
+            {% else %}
             <a href="/?offset={{ prev_page }}">← </a>
             <a href="/?offset={{ next_page }}">→ </a>
+            {% endif %}
         </div>
-        <div style="font-size: small">
-            <a href="/feeds">Manage Feeds</a>
+        <div class="foot">
+            <div class="nav">
+                <a href="/feeds">Manage Feeds</a>
+                <a href="/stats">Update Statistics</a>
+            </div>
             <div class="info">
                 Last updated in {{ update_time }}s on {{ last_update | format_date }} ({{ new_item_count }} new items from {{ feed_count }} feeds).
                 Loaded now in {{ load_time }}s.

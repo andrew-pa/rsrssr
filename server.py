@@ -33,13 +33,13 @@ PAGE_SIZE = 48
 def index():
     start_time = time.time()
     offset = request.args.get("offset", default=0, type=int)
-    items = (
-        db.session.query(Item)
-        .order_by(Item.published.desc())
-        .offset(offset)
-        .limit(PAGE_SIZE)
-        .all()
-    )
+    specific_feed_id = request.args.get("feed", default=None, type=int)
+
+    items_query = db.session.query(Item).order_by(Item.published.desc())
+    if specific_feed_id:
+        items_query = items_query.where(Item.feed_id == specific_feed_id)
+    items = items_query.offset(offset).limit(PAGE_SIZE).all()
+
     last_stats = (
         db.session.query(UpdateStat)
         .order_by(UpdateStat.timestamp.desc())
@@ -47,7 +47,10 @@ def index():
         .first()
     )
     if last_stats is None:
-        return "uhoh"
+        return "<pre>ERROR: You need to run the feed updater first!</pre>"
+    specific_feed = None
+    if specific_feed_id:
+        specific_feed = db.session.query(Feed).get(specific_feed_id)
     load_time = time.time()
     return render_template(
         "index.html",
@@ -59,6 +62,7 @@ def index():
         last_update=last_stats.timestamp,
         prev_page=offset - PAGE_SIZE if offset > PAGE_SIZE else 0,
         next_page=offset + PAGE_SIZE,
+        from_feed=specific_feed,
     )
 
 
