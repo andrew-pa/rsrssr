@@ -1,3 +1,4 @@
+{% from 'macros.html' import itemView, navLinks %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -18,26 +19,7 @@
         </div>
         {% endif %}
         {% for item in items %}
-            <div class="feed-item">
-                <a href="{{ item.link }}" target="_blank">{{ item.title }}</a>
-                <div class="item-info">
-                <span>
-                    {% if not from_feed %}
-                    <a href="/?feed={{ item.feed_id }}">{{ item.feed.title }}</a>
-                    {% if item.author %} / {% endif %}
-                    {% endif %}
-                    {% if item.author %}
-                        {{item.author}}
-                    {% endif %}
-                </span>
-                —
-                <span>{{ item.published | format_date | default('unknown', true) }}</span>
-                <details>
-                    <summary>Description</summary>
-                    {{ item.description | safe }}
-                </details>
-                </div>
-            </div>
+            {{ itemView(item=item, showFeedTitle=not from_feed, showAuthor=True) }}
         {% endfor %}
     </div>
     <footer>
@@ -51,10 +33,7 @@
             {% endif %}
         </div>
         <div class="foot">
-            <div class="nav">
-                <a href="/feeds">Manage Feeds</a>
-                <a href="/stats">Update Statistics</a>
-            </div>
+            {{ nav() }}
             <div class="info">
                 Last updated in {{ update_time }}s on {{ last_update | format_date }} ({{ new_item_count }} new items from {{ feed_count }} feeds).
                 Loaded now in {{ load_time }}s.

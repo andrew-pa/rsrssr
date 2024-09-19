@@ -1,0 +1,29 @@
+{% macro itemView(item, showFeedTitle, showAuthor) %}
+<div class="feed-item">
+    <a href="{{ item.link }}" target="_blank">{{ item.title }}</a>
+    <div class="item-info">
+        <span>
+            {% if showFeedTitle %}
+            <a href="/?feed={{ item.feed_id }}">{{ item.feed.title }}</a>
+            {% if item.author and showAuthor %} / {% endif %}
+            {% endif %}
+            {% if item.author and showAuthor %}
+            {{item.author}}
+            {% endif %}
+        </span>
+        {% if item.author and showAuthor %}—{% endif %}
+        <span>{{ item.published | format_date | default('unknown', true) }}</span>
+        <details>
+            <summary>Description</summary>
+            {{ item.description | safe }}
+        </details>
+    </div>
+</div>
+{% endmacro %}
+
+{% macro navLinks() %}
+<div class="nav">
+    <a href="/feeds">Manage Feeds</a>
+    <a href="/stats">Update Statistics</a>
+</div>
+{% endmacro %}

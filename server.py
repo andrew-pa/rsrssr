@@ -1,11 +1,13 @@
 import time
 from flask import Flask, render_template, request, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
+import sqlalchemy
 
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import plotly.io
 import pandas as pd
+import datetime
 
 from update import update_feed
 
@@ -63,6 +65,75 @@ def index():
         prev_page=offset - PAGE_SIZE if offset > PAGE_SIZE else 0,
         next_page=offset + PAGE_SIZE,
         from_feed=specific_feed,
+    )
+
+
+def get_items_grouped(session):
+    """
+    Retrieves feeds with items from the last five days.
+
+    Args:
+        session (Session): SQLAlchemy session connected to the database.
+
+    Returns:
+        List[Dict]: A list of dictionaries, each containing the feed title and its recent items.
+    """
+    five_days_ago = datetime.datetime.now() - datetime.timedelta(days=5)
+
+    # Subquery to get the maximum published date for each feed within the last three days
+    subquery = (
+        session.query(
+            Item.feed_id, sqlalchemy.func.max(Item.published).label("max_published")
+        )
+        .filter(Item.published >= five_days_ago)
+        .group_by(Item.feed_id)
+        .subquery()
+    )
+
+    # Query to fetch feeds that have items in the last three days, along with their max published date
+    feeds_with_max = (
+        session.query(Feed, subquery.c.max_published)
+        .join(subquery, Feed.id == subquery.c.feed_id)
+        .order_by(subquery.c.max_published.desc())
+        .all()
+    )
+
+    result = []
+
+    for feed, _ in feeds_with_max:
+        recent_items = (
+            session.query(Item)
+            .filter(Item.feed_id == feed.id, Item.published >= five_days_ago)
+            .order_by(Item.published.desc())
+            .limit(5)
+            .all()
+        )
+
+        # Convert items to dictionaries
+        items_list = [
+            {
+                "title": item.title,
+                "link": item.link,
+                "published": item.published,
+                "description": item.description,
+                "author": item.author,
+            }
+            for item in recent_items
+        ]
+
+        # Append the feed and its items to the result list
+        result.append({"id": feed.id, "title": feed.title, "items": items_list})
+
+    return result
+
+
+@app.route("/ov")
+def overview():
+    start_time = time.time()
+    feeds = get_items_grouped(db.session)
+    load_time = time.time()
+    return render_template(
+        "overview.html", feeds=feeds, load_time=round(load_time - start_time, 3)
     )
 
 

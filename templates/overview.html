@@ -1,0 +1,31 @@
+{% from 'macros.html' import itemView, navLinks %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>RSRSSR</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <link rel="stylesheet" href="/static/overview-styles.css">
+</head>
+<body>
+    <div class="container">
+    {% for feed in feeds %}
+    <div class="feed-card">
+        <a class="title" href="/?feed={{ feed.id }}">{{feed.title}}</a>
+        <div class="card-items">
+        {% for item in feed['items'] %}
+            {{ itemView(item=item, showFeedTitle=False, showAuthor=False) }}
+        {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+    </div>
+    <footer>
+        <div class="foot">
+        {{ navLinks() }}
+        <div class="info">Loaded in {{load_time}}s.</div>
+        </div>
+    </footer>
+</body>
+</html>
