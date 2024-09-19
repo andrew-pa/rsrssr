@@ -165,6 +165,7 @@ def graph_update_stats():
         FROM update_stats
         LEFT JOIN feed min_feed ON update_stats.dur_min_feed_id = min_feed.id
         LEFT JOIN feed max_feed ON update_stats.dur_max_feed_id = max_feed.id
+        WHERE update_stats.timestamp >= DATE("now", "-1 month")
     """,
         con=db.session.connection(),
     )

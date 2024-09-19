@@ -22,9 +22,15 @@ body {
     background-color: var(--color-background);
 }
 
-@media screen and (width > 600px) {
+@media screen and (width > 1600px) {
     body {
         padding: 1rem 16vw;
+    }
+}
+
+@media screen and (width > 600px) {
+    body {
+        padding: 1rem 4vw;
     }
 }
 
