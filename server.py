@@ -66,7 +66,7 @@ def page_manage_feeds():
 
 @app.route("/stats")
 def graph_update_stats():
-    timeframe = request.args.get("window", default="month", type=str)
+    timeframe = request.args.get("window", default="week", type=str)
     data = fetch_update_stats(db.session, timeframe)
     fig = plot_update_stats_figure(data)
     fig_html = plotly.io.to_html(fig, full_html=False)
