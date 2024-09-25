@@ -3,43 +3,43 @@
 }
 
 .container {
-    column-count: 4; /* Number of masonry columns */
-    column-gap: 1rem; /* Gap between columns */
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: masonry;
+    grid-gap: 1rem;
 }
 
-.feed-card {
-    margin-bottom: 1rem;
-    display: inline-block;
-    width: 100%;
-    border-radius: 0.5rem;
-    border: 1px solid var(--color-border);
-    padding: 0.75rem;
-}
-
-.feed-card .title {
-    font-size: 17pt;
-    color: var(--color-foreground);
-}
-
-.feed-card .card-items {
-    margin-top: 0.75rem;
-}
-
-/* Media queries for responsive layout */
 @media (max-width: 1200px) {
     .container {
-        column-count: 3;
+        grid-template-columns: repeat(3, 1fr);
     }
 }
 
 @media (max-width: 800px) {
     .container {
-        column-count: 2;
+        grid-template-columns: repeat(2, 1fr);
     }
 }
 
 @media (max-width: 500px) {
     .container {
-        column-count: 1;
+        grid-template-columns: repeat(1, 1fr);
     }
+}
+
+.feed-card {
+    width: 100%;
+    border-radius: 0.5rem;
+    border: 0.5px solid var(--color-border);
+    padding: 0.75rem;
+}
+
+.feed-card .title {
+    font-size: 16pt;
+    font-style: bold;
+    color: var(--color-foreground);
+}
+
+.feed-card .card-items {
+    margin-top: 0.75rem;
 }
