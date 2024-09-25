@@ -1,18 +1,15 @@
-{% from 'macros.html' import itemView, navLinks %}
+{% from 'macros.html' import pageHead, itemView, navLinks, footerInfo %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>RSRSSR</title>
-    <link rel="stylesheet" href="/static/styles.css">
+    {{ pageHead(title="RSRSSR") }}
     <link rel="stylesheet" href="/static/overview-styles.css">
 </head>
 <body>
     <div class="container">
     {% for feed in feeds %}
     <div class="feed-card">
-        <a class="title" href="/?feed={{ feed.id }}">{{feed.title}}</a>
+        <a class="title" href="/list?feed={{ feed.id }}">{{feed.title}}</a>
         <div class="card-items">
         {% for item in feed['items'] %}
             {{ itemView(item=item, showFeedTitle=False, showAuthor=False) }}
@@ -24,7 +21,7 @@
     <footer>
         <div class="foot">
         {{ navLinks() }}
-        <div class="info">Loaded in {{load_time}}s.</div>
+        {{ footerInfo(last_stats, load_time) }}
         </div>
     </footer>
 </body>

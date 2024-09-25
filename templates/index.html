@@ -1,11 +1,8 @@
-{% from 'macros.html' import itemView, navLinks %}
+{% from 'macros.html' import itemView, navLinks, pageHead, footerInfo %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>RSRSSR</title>
-    <link rel="stylesheet" href="/static/styles.css">
+    {{ pageHead(title="RSRSSR") }}
 </head>
 <body>
     <div>
@@ -25,19 +22,16 @@
     <footer>
         <div class="pages">
             {% if from_feed %}
-            <a href="/?feed={{ from_feed.id }}&offset={{ prev_page }}">← </a>
-            <a href="/?feed={{ from_feed.id }}&offset={{ next_page }}">→ </a>
+            <a href="/list?feed={{ from_feed.id }}&offset={{ prev_page }}">← </a>
+            <a href="/list?feed={{ from_feed.id }}&offset={{ next_page }}">→ </a>
             {% else %}
-            <a href="/?offset={{ prev_page }}">← </a>
-            <a href="/?offset={{ next_page }}">→ </a>
+            <a href="/list?offset={{ prev_page }}">← </a>
+            <a href="/list?offset={{ next_page }}">→ </a>
             {% endif %}
         </div>
         <div class="foot">
             {{ navLinks() }}
-            <div class="info">
-                Last updated in {{ update_time }}s on {{ last_update | format_date }} ({{ new_item_count }} new items from {{ feed_count }} feeds).
-                Loaded now in {{ load_time }}s.
-            </div>
+            {{ footerInfo(last_stats, load_time) }}
         </div>
     </footer>
 </body>

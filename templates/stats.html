@@ -1,0 +1,20 @@
+{% from 'macros.html' import itemView, navLinks, pageHead %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {{ pageHead(title="RSRSSR: Update Stats") }}
+</head>
+<body>
+    {{ figure | safe }}
+    <footer>
+        <div class="foot">
+            {{ navLinks() }}
+            <div class="nav">
+                <a href="/stats?window=day">Last Day</a>
+                <a href="/stats?window=week">Last Week</a>
+                <a href="/stats?window=month">Last Month</a>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

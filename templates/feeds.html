@@ -1,10 +1,8 @@
+{% from 'macros.html' import pageHead %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>RSRSSR: Manage Feeds</title>
-    <link rel="stylesheet" href="/static/styles.css">
+    {{ pageHead(title="RSRSSR: Manage Feeds") }}
 </head>
 <body>
     <h1>Manage RSS Feeds</h1>
@@ -29,7 +27,7 @@
         {% for feed in feeds %}
             <tr>
                 <td>
-                    <a href="/?feed={{feed.id}}">{{ feed.title | default("Unknown", true) }}</a>
+                    <a href="/list?feed={{feed.id}}">{{ feed.title | default("Unknown", true) }}</a>
                 </td>
                 <td>
                     <a href="{{feed.url}}">{{ feed.url }}</a>

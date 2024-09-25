@@ -1,10 +1,18 @@
+{% macro pageHead(title) %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <script src="/static/item.mjs" type="module"></script>
+{% endmacro %}
+
 {% macro itemView(item, showFeedTitle, showAuthor) %}
 <div class="feed-item">
-    <a href="{{ item.link }}" target="_blank">{{ item.title }}</a>
+    <a href="{{ item.link }}" target="_blank" onclick="postVisit({{ item.id }})">{{ item.title }}</a>
     <div class="item-info">
         <span>
             {% if showFeedTitle %}
-            <a href="/?feed={{ item.feed_id }}">{{ item.feed.title }}</a>
+            <a href="/list?feed={{ item.feed_id }}">{{ item.feed.title }}</a>
             {% if item.author and showAuthor %} / {% endif %}
             {% endif %}
             {% if item.author and showAuthor %}
@@ -24,6 +32,16 @@
 {% macro navLinks() %}
 <div class="nav">
     <a href="/feeds">Manage Feeds</a>
+    <a href="/list">All Items</a>
     <a href="/stats">Update Statistics</a>
+</div>
+{% endmacro %}
+
+{% macro footerInfo(last_stats, load_time) %}
+<div class="info">
+    {% if last_stats %}
+    Last updated in {{ last_stats.dur_total }}s on {{ last_stats.timestamp | format_date }} ({{ last_stats.num_new_items }} new items from {{ last_stats.num_feeds }} feeds).
+    {% endif %}
+    Loaded now in {{ load_time }}s.
 </div>
 {% endmacro %}
