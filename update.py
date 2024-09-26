@@ -94,12 +94,12 @@ def update_feeds(session):
     feed_update_stats = []
     print(f"updating {len(feeds)} feeds")
     for feed in feeds:
-        # only update uncached feeds every 3 hours
+        # only update uncached feeds every 6 hours
         if (
             feed.etag is None
             and feed.modified is None
             and feed.last_updated is not None
-            and abs(feed.last_updated - datetime.now()) < timedelta(hours=3)
+            and abs(feed.last_updated - datetime.now()) < timedelta(hours=6)
         ):
             continue
         try:

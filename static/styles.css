@@ -67,6 +67,10 @@ a {
 a:visited {
     color: var(--color-visited);
 }
+a.visited-item {
+    color: var(--color-visited);
+    text-decoration: underline var(--color-subtle);
+}
 
 .feed-item {
     margin-bottom: 0.5rem;

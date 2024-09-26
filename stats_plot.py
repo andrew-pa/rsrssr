@@ -130,12 +130,12 @@ def plot_update_stats_figure(data: pd.DataFrame) -> go.Figure:
 
     # Update layout for a clean look
     fig.update_layout(
-            title_text="RSS Updates",
-            showlegend=True,
-            hovermode="x unified",
-            plot_bgcolor="black", paper_bgcolor="black", font={"color":"white"}
-        )
-
-
+        title_text="RSS Updates",
+        showlegend=True,
+        hovermode="x unified",
+        plot_bgcolor="black",
+        paper_bgcolor="black",
+        font={"color": "white"},
+    )
 
     return fig

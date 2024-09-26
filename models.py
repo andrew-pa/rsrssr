@@ -1,4 +1,13 @@
-from sqlalchemy import Column, Integer, Float, String, Text, DateTime, ForeignKey
+from sqlalchemy import (
+    Boolean,
+    Column,
+    Integer,
+    Float,
+    String,
+    Text,
+    DateTime,
+    ForeignKey,
+)
 from sqlalchemy.orm import relationship, declarative_base
 
 Base = declarative_base()
@@ -25,6 +34,7 @@ class Item(Base):
     published = Column(DateTime, nullable=False, index=True)
     description = Column(Text, nullable=True)
     author = Column(String(128), nullable=True)
+    visited = Column(Boolean, nullable=False, default=False)
     feed_id = Column(Integer, ForeignKey("feed.id"), nullable=False, index=True)
 
 

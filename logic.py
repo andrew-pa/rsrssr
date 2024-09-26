@@ -56,17 +56,17 @@ def overview(session: scoped_session) -> dict[str, Any]:
 
     five_days_ago = datetime.datetime.now() - datetime.timedelta(days=5)
 
-    # Subquery to get the maximum published date for each feed within the last three days
+    # Subquery to get the maximum published date for each feed within the last five days
     subquery = (
         session.query(
             Item.feed_id, sqlalchemy.func.max(Item.published).label("max_published")
         )
-        .filter(Item.published >= five_days_ago)
+        .filter(Item.published >= five_days_ago, Item.visited == False)
         .group_by(Item.feed_id)
         .subquery()
     )
 
-    # Query to fetch feeds that have items in the last three days, along with their max published date
+    # Query to fetch feeds that have items in the last five days, along with their max published date
     feeds_with_max = (
         session.query(Feed, subquery.c.max_published)
         .join(subquery, Feed.id == subquery.c.feed_id)
@@ -79,7 +79,11 @@ def overview(session: scoped_session) -> dict[str, Any]:
     for feed, _ in feeds_with_max:
         recent_items = (
             session.query(Item)
-            .filter(Item.feed_id == feed.id, Item.published >= five_days_ago)
+            .filter(
+                Item.feed_id == feed.id,
+                Item.published >= five_days_ago,
+                Item.visited == False,
+            )
             .order_by(Item.published.desc())
             .limit(5)
             .all()
@@ -138,3 +142,10 @@ def fetch_update_stats(session: scoped_session, timeframe: str) -> pd.DataFrame:
     """,
         con=session.connection(),
     )
+
+
+def record_visit(session: scoped_session, item_id: int):
+    item = session.query(Item).get(item_id)
+    if item:
+        item.visited = True
+    session.commit()

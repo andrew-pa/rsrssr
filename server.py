@@ -1,5 +1,5 @@
 import time
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, abort, render_template, request, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 import sqlalchemy
 
@@ -16,6 +16,7 @@ from logic import (
     item_list,
     overview,
     feed_list,
+    record_visit,
 )
 from stats_plot import plot_update_stats_figure
 from update import update_feed
@@ -36,6 +37,12 @@ def format_date(value, format="%d %B %Y, %I:%M %p"):
     return value.strftime(format)
 
 
+@app.route("/")
+def page_overview():
+    props = overview(db.session)
+    return render_template("overview.html", **props)
+
+
 @app.route("/list")
 def page_item_list():
     offset = request.args.get("offset", default=0, type=int)
@@ -44,12 +51,6 @@ def page_item_list():
     props = item_list(db.session, offset, specific_feed_id)
 
     return render_template("index.html", **props)
-
-
-@app.route("/")
-def page_overview():
-    props = overview(db.session)
-    return render_template("overview.html", **props)
 
 
 @app.route("/feeds", methods=["GET", "POST"])
@@ -64,12 +65,21 @@ def page_manage_feeds():
     return render_template("feeds.html", **feed_list(db.session))
 
 
+@app.route("/visit", methods=["POST"])
+def visit_item():
+    item_id = request.args.get("id", type=int)
+    if not item_id:
+        abort(400)
+    record_visit(db.session, item_id)
+    return ""
+
+
 @app.route("/stats")
 def graph_update_stats():
     timeframe = request.args.get("window", default="week", type=str)
     data = fetch_update_stats(db.session, timeframe)
     fig = plot_update_stats_figure(data)
-    fig_html = plotly.io.to_html(fig, full_html=False)
+    fig_html = plotly.io.to_html(fig, full_html=False, default_height="80vh")
     return render_template("stats.html", figure=fig_html)
 
 

@@ -1,2 +1,2 @@
 
-window.postVisit = (itemId) => navigator.sendBeacon(`/visit/?id=${itemId}`);
+window.postVisit = (itemId) => navigator.sendBeacon(`/visit?id=${itemId}`);
