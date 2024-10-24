@@ -4,9 +4,15 @@
 
 .container {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     grid-template-rows: masonry;
     grid-gap: 1rem;
+}
+
+@media (max-width: 2400px) {
+    .container {
+        grid-template-columns: repeat(4, 1fr);
+    }
 }
 
 @media (max-width: 1200px) {

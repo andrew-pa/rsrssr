@@ -20,6 +20,7 @@ body {
     padding: 1rem;
     color: var(--color-foreground);
     background-color: var(--color-background);
+    font-family: serif;
 }
 
 @media screen and (width > 1600px) {
