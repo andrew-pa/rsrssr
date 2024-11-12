@@ -22,10 +22,11 @@
         </span>
         {% if item.author and showAuthor %}—{% endif %}
         <span>{{ item.published | format_date | default('unknown', true) }}</span>
-        <details>
-            <summary>Description</summary>
-            {{ item.description | safe }}
-        </details>
+        <button onclick="showDescriptionDialog({{ item.id }})">Show Description</button>
+        <dialog id="description-dialog-{{ item.id }}">
+            <p>{{ item.description | safe }}</p>
+            <button onclick="closeDescriptionDialog({{ item.id }})">Close</button>
+        </dialog>
     </div>
 </div>
 {% endmacro %}
