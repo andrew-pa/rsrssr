@@ -1,5 +1,6 @@
 
 window.postVisit = (itemId) => navigator.sendBeacon(`/visit?id=${itemId}`);
+
 window.showDescriptionDialog = (itemId) => {
     const dialog = document.getElementById(`description-dialog-${itemId}`);
     if (dialog) {

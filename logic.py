@@ -54,14 +54,14 @@ def item_list(
 def overview(session: scoped_session) -> dict[str, Any]:
     start_time = time.time()
 
-    five_days_ago = datetime.datetime.now() - datetime.timedelta(days=5)
+    since_date = datetime.datetime.now() - datetime.timedelta(days=14)
 
-    # Subquery to get the maximum published date for each feed within the last five days
+    # Subquery to get the maximum published date for each feed
     subquery = (
         session.query(
             Item.feed_id, sqlalchemy.func.max(Item.published).label("max_published")
         )
-        .filter(Item.published >= five_days_ago, Item.visited == False)
+        .filter(Item.published >= since_date, Item.visited == False)
         .group_by(Item.feed_id)
         .subquery()
     )
@@ -81,11 +81,11 @@ def overview(session: scoped_session) -> dict[str, Any]:
             session.query(Item)
             .filter(
                 Item.feed_id == feed.id,
-                Item.published >= five_days_ago,
+                Item.published >= since_date,
                 Item.visited == False,
             )
             .order_by(Item.published.desc())
-            .limit(5)
+            .limit(7)
             .all()
         )
 
