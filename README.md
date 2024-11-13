@@ -17,8 +17,8 @@ The application uses SQLite to store data. The database includes tables for feed
 
 1. **Clone the Repository**:
    ```bash
-   git clone <repository-url>
-   cd <repository-directory>
+   git clone https://github.com/andrew-pa/rsrssr
+   cd rsrssr
    ```
 
 2. **Set Up a Virtual Environment**:
