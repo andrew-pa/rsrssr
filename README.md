@@ -66,13 +66,20 @@ The application uses SQLite to store data. The database includes tables for feed
 
    This will start the server with 4 worker processes, suitable for handling production traffic.
 
+3. **Run the updater**:
+    ```bash
+    python update.py
+    ```
+
+    The update script needs to be run periodically to fetch new items for all feeds. It shouldn't run more than once an hour.
+
 ## Source Code Overview
 
 The source code is organized into several key files, each serving a specific purpose:
 
 - **server.py**: This is the main entry point for the Flask application. It sets up the routes and initializes the database connection using SQLAlchemy.
 
-- **update.py**: Contains functions to update RSS feeds, parse feed data, and store new items in the database. It also manages the update statistics.
+- **update.py**: This standalone script fetches updates for all feeds. Contains functions to update RSS feeds, parse feed data, and store new items in the database. It also manages the update statistics.
 
 - **models.py**: Defines the database models using SQLAlchemy ORM. It includes models for `Feed`, `Item`, and `UpdateStat`.
 
@@ -84,4 +91,4 @@ The source code is organized into several key files, each serving a specific pur
 
 - **Static Files**: Located in the `static` directory, including styles and JavaScript modules.
 - **Templates**: HTML templates are located in the `templates` directory.
-- **Systemd Services**: Configuration files for running the update script as a systemd service are located in the `systemd` directory.
+- **Systemd Services**: Example configuration files for running the webapp as a systemd service are located in the `systemd` directory.
