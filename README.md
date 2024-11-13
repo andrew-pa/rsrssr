@@ -37,6 +37,7 @@ The application uses SQLite to store data. The database includes tables for feed
 4. **Initialize the Database**:
    Ensure the `instance` directory exists and run the following to create the database:
    ```bash
+   mkdir instance
    python update.py
    ```
 
