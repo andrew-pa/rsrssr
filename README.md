@@ -1,9 +1,11 @@
 # RSRSSR (Really Simple RSS Reader)
 
 RSRSSR is a web-based RSS feed reader that allows users to manage and view RSS feeds, track updates, and visualize update statistics. It is built using Flask, SQLAlchemy, and Plotly.
+RSRSSR only supports a single user, so there is no authentication/authorization code.
 
 ## Features
 
+- **Overview**: The main page shows new items from each feed for the last two weeks, limited to the seven most recent items. This view strikes a balance between readability, information density and freshness.
 - **Manage Feeds**: Add or delete RSS feeds.
 - **View Items**: Browse through items from all feeds, with options to filter by specific feeds.
 - **Track Visits**: Mark items as visited when clicked.
