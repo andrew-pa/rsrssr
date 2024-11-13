@@ -66,7 +66,21 @@ The application uses SQLite to store data. The database includes tables for feed
 
    This will start the server with 4 worker processes, suitable for handling production traffic.
 
-## Additional Information
+## Source Code Overview
+
+The source code is organized into several key files, each serving a specific purpose:
+
+- **server.py**: This is the main entry point for the Flask application. It sets up the routes and initializes the database connection using SQLAlchemy.
+
+- **update.py**: Contains functions to update RSS feeds, parse feed data, and store new items in the database. It also manages the update statistics.
+
+- **models.py**: Defines the database models using SQLAlchemy ORM. It includes models for `Feed`, `Item`, and `UpdateStat`.
+
+- **logic.py**: Implements the core logic for managing feeds, items, and update statistics. It includes functions for adding, deleting, and listing feeds, as well as recording item visits.
+
+- **stats_plot.py**: Responsible for generating visualizations of update statistics using Plotly. It creates subplots to display various metrics related to feed updates.
+
+- **__init__.py**: An empty file that marks the directory as a Python package.
 
 - **Static Files**: Located in the `static` directory, including styles and JavaScript modules.
 - **Templates**: HTML templates are located in the `templates` directory.
