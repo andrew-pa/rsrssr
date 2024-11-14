@@ -90,7 +90,7 @@ def overview(session: scoped_session) -> dict[str, Any]:
 
     items_by_feed = []
 
-    for feed, _ in feeds_with_max:
+    for feed, _, _ in feeds_with_max:
         recent_items = (
             session.query(Item)
             .filter(
