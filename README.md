@@ -37,6 +37,7 @@ The application uses SQLite to store data. The database includes tables for feed
 4. **Initialize the Database**:
    Ensure the `instance` directory exists and run the following to create the database:
    ```bash
+   mkdir instance
    python update.py
    ```
 
@@ -46,12 +47,13 @@ The application uses SQLite to store data. The database includes tables for feed
    ```
 
    The server will start in development mode and can be accessed at `http://127.0.0.1:5000`.
+   Nothing will appear until you add some feeds in the 'Manage Feeds' page.
 
 ## Working on the Code Locally
 
 - Ensure your virtual environment is activated.
 - Make changes to the codebase as needed.
-- Use a tool like `flake8` for linting and `pytest` for testing to maintain code quality.
+- Use `black` to format code.
 
 ## Running for Production
 
@@ -63,17 +65,15 @@ The application uses SQLite to store data. The database includes tables for feed
 
 2. **Run the Server with Gunicorn**:
    ```bash
-   gunicorn -w 4 server:app
+   gunicorn server:app
    ```
-
-   This will start the server with 4 worker processes, suitable for handling production traffic.
 
 3. **Run the updater**:
     ```bash
     python update.py
     ```
 
-    The update script needs to be run periodically to fetch new items for all feeds. It shouldn't run more than once an hour.
+    The update script needs to be run periodically to fetch new items for all feeds. It shouldn't run more than once an hour, as each time it runs it will make a request for each feed. We do attempt to correctly implement caching to prevent unnecessary load on the feed servers.
 
 ## Source Code Overview
 
