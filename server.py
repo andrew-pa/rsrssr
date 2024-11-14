@@ -1,13 +1,6 @@
-import time
 from flask import Flask, abort, render_template, request, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
-import sqlalchemy
-
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 import plotly.io
-import pandas as pd
-import datetime
 
 from logic import (
     add_feed,
@@ -19,8 +12,7 @@ from logic import (
     record_visit,
 )
 from stats_plot import plot_update_stats_figure
-from update import update_feed
-from models import Base, Item, Feed, UpdateStat
+from models import Base
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///rss_feeds.db"

@@ -5,13 +5,17 @@ import sqlalchemy
 import datetime
 import pandas as pd
 
-from sqlalchemy.orm import Session, scoped_session
+from sqlalchemy.orm import scoped_session
 
 from update import update_feed
 
-from models import Base, Item, Feed, UpdateStat
+from models import Item, Feed, UpdateStat
 
+# number of items per page
 PAGE_SIZE = 48
+
+# number of decimal places for printing durations
+TIMING_PRECISION = 3
 
 
 def last_update_stats(session: scoped_session) -> UpdateStat | None:
@@ -19,7 +23,7 @@ def last_update_stats(session: scoped_session) -> UpdateStat | None:
         session.query(UpdateStat).order_by(UpdateStat.timestamp.desc()).limit(1).first()
     )
     if last_stats:
-        last_stats.dur_total = round(last_stats.dur_total, 3)
+        last_stats.dur_total = round(last_stats.dur_total, TIMING_PRECISION)
     return last_stats
 
 
@@ -43,7 +47,7 @@ def item_list(
 
     return {
         "items": items,
-        "load_time": round(load_time - start_time, 3),
+        "load_time": round(load_time - start_time, TIMING_PRECISION),
         "last_stats": last_stats,
         "prev_page": offset - PAGE_SIZE if offset > PAGE_SIZE else 0,
         "next_page": offset + PAGE_SIZE,
@@ -51,10 +55,18 @@ def item_list(
     }
 
 
+# maximum age of each item displayed
+OVERVIEW_NUM_DAYS_SINCE = 14
+# maximum number of items to display per feed
+OVERVIEW_ITEMS_PER_FEED = 7
+
+
 def overview(session: scoped_session) -> dict[str, Any]:
     start_time = time.time()
 
-    since_date = datetime.datetime.now() - datetime.timedelta(days=14)
+    since_date = datetime.datetime.now() - datetime.timedelta(
+        days=OVERVIEW_NUM_DAYS_SINCE
+    )
 
     # Subquery to get the maximum published date for each feed
     subquery = (
@@ -66,7 +78,7 @@ def overview(session: scoped_session) -> dict[str, Any]:
         .subquery()
     )
 
-    # Query to fetch feeds that have items in the last five days, along with their max published date
+    # Query to fetch feeds that have items since `since_date`, along with their max published date
     feeds_with_max = (
         session.query(Feed, subquery.c.max_published)
         .join(subquery, Feed.id == subquery.c.feed_id)
@@ -85,7 +97,7 @@ def overview(session: scoped_session) -> dict[str, Any]:
                 Item.visited == False,
             )
             .order_by(Item.published.desc())
-            .limit(7)
+            .limit(OVERVIEW_ITEMS_PER_FEED)
             .all()
         )
 
@@ -100,7 +112,7 @@ def overview(session: scoped_session) -> dict[str, Any]:
 
     return {
         "feeds": items_by_feed,
-        "load_time": round(load_time - start_time, 3),
+        "load_time": round(load_time - start_time, TIMING_PRECISION),
         "last_stats": last_stats,
     }
 
