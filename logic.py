@@ -72,25 +72,25 @@ def overview(session: scoped_session) -> dict[str, Any]:
     subquery = (
         session.query(
             Item.feed_id,
-            sqlalchemy.func.max(Item.published).label("max_published"),
-            sqlalchemy.func.count(Item.id).label("item_count")
+            sqlalchemy.func.max(Item.published).label("last_published"),
+            sqlalchemy.func.count(Item.id).label("item_count"),
         )
         .filter(Item.published >= since_date, Item.visited == False)
         .group_by(Item.feed_id)
         .subquery()
     )
 
-    # Query to fetch feeds that have items since `since_date`, along with their max published date and item count
+    # Query to fetch feeds that have items since `since_date`, ordered by feed last published and item count
     feeds_with_max = (
-        session.query(Feed, subquery.c.max_published, subquery.c.item_count)
+        session.query(Feed)
         .join(subquery, Feed.id == subquery.c.feed_id)
-        .order_by(subquery.c.max_published.desc(), subquery.c.item_count.asc())
+        .order_by(subquery.c.last_published.desc(), subquery.c.item_count.asc())
         .all()
     )
 
     items_by_feed = []
 
-    for feed, _, _ in feeds_with_max:
+    for feed in feeds_with_max:
         recent_items = (
             session.query(Item)
             .filter(
