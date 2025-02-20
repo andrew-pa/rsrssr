@@ -10,6 +10,7 @@ from logic import (
     overview,
     feed_list,
     record_visit,
+    toggle_feed_downrank,
 )
 from stats_plot import plot_update_stats_figure
 from models import Base
@@ -50,6 +51,8 @@ def page_manage_feeds():
     if request.method == "POST":
         if "delete" in request.form:
             delete_feed(db.session, int(request.form["delete"]))
+        elif "downrank" in request.form:
+            toggle_feed_downrank(db.session, int(request.form["downrank"]))
         else:
             add_feed(db.session, request.form["url"])
         return redirect(url_for("page_manage_feeds"))

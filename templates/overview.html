@@ -8,7 +8,7 @@
 <body>
     <div class="container">
     {% for feed in feeds %}
-    <div class="feed-card">
+    <div class="feed-card" title="{{ feed.rank }}">
         <a class="title" href="/list?feed={{ feed.id }}">{{feed.title}}</a>
         <div class="card-items">
         {% for item in feed['items'] %}

@@ -19,6 +19,7 @@
                 <th>URL</th>
                 <th>Last Updated</th>
                 <th>Has Cache Tag</th>
+                <th>Downranked</th>
                 <th>Num. Items</th>
                 <th></th>
             </tr>
@@ -37,6 +38,14 @@
                 </td>
                 <td>
                     <input type="checkbox" disabled {% if feed.etag is not none or feed.modified is not none %}checked{% endif %}/>
+                </td>
+                <td>
+                    <form method="POST" style="display:inline;">
+                        <input type="hidden" name="downrank" value="{{ feed.id }}">
+                        <input type="checkbox"
+                            {% if feed.downrank %}checked{% endif %}
+                            onchange="this.form.submit()"/>
+                    </form>
                 </td>
                 <td> {{ feed.items | length }} </td>
                 <td>
