@@ -1,5 +1,6 @@
 from typing import Any
 import time
+import math
 import sqlalchemy
 
 import datetime
@@ -56,7 +57,7 @@ def item_list(
 
 
 # maximum age of each item displayed
-OVERVIEW_NUM_DAYS_SINCE = 14
+OVERVIEW_NUM_DAYS_SINCE = 30
 # maximum number of items to display per feed
 OVERVIEW_ITEMS_PER_FEED = 7
 
@@ -103,10 +104,18 @@ def overview(session: scoped_session) -> dict[str, Any]:
             .all()
         )
 
+        top_item_age = (datetime.datetime.now() - recent_items[0].published).days
+        rank = math.cos(top_item_age * 2 * math.pi / 30) - top_item_age * 0.01
+        if feed.downrank:
+            rank -= 100
+            recent_items = recent_items[0 : (OVERVIEW_ITEMS_PER_FEED // 2)]
+
         # Append the feed and its items to the result list
         items_by_feed.append(
-            {"id": feed.id, "title": feed.title, "items": recent_items}
+            {"id": feed.id, "title": feed.title, "items": recent_items, "rank": rank}
         )
+
+    items_by_feed.sort(key=lambda x: -x["rank"])
 
     last_stats = last_update_stats(session)
 
