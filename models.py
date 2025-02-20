@@ -21,6 +21,7 @@ class Feed(Base):
     etag = Column(String(128), nullable=True)
     modified = Column(String(128), nullable=True)
     last_updated = Column(DateTime, nullable=True)
+    downrank = Column(Boolean, nullable=False)
     items = relationship(
         "Item", backref="feed", lazy=True, cascade="all, delete-orphan"
     )

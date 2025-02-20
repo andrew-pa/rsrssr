@@ -132,6 +132,12 @@ def delete_feed(session: scoped_session, id: int):
     session.commit()
 
 
+def toggle_feed_downrank(session: scoped_session, id: int):
+    feed = session.query(Feed).get(id)
+    feed.downrank = not feed.downrank
+    session.commit()
+
+
 def feed_list(session: scoped_session):
     feeds = session.query(Feed).order_by(Feed.last_updated.desc()).all()
     return {"feeds": feeds}
