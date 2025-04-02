@@ -6,28 +6,36 @@
 </head>
 <body>
     <div>
+        <a href="/">← Back to Overview</a>
         {% if from_feed %}
         <div class="from-feed-header">
-            <a href="/">← Back to All Feeds</a>
+            <a href="{{ request | update_query('feed', None) }}">← Back to All Feeds</a>
             <h1>{{ from_feed.title }}</h1>
             <p class="info">
                 Last updated: {{ from_feed.last_updated | format_date | default("never", true) }}. Number of items: {{ from_feed.items | length }}.
             </p>
         </div>
         {% endif %}
+        <div class="items-status-header">
+            See also:
+            {% if state_filter != "all" %}
+            <a href="{{request | update_query('k', 'all')}}">All Items</a>,
+            {% endif %}
+            {% if state_filter != "visited" %}
+            <a href="{{request | update_query('k', 'visited')}}">Only Visited Items</a>,
+            {% endif %}
+            {% if state_filter != "liked" %}
+            <a href="{{request | update_query('k', 'liked')}}">Only Liked Items</a>
+            {% endif %}
+        </div>
         {% for item in items %}
-            {{ itemView(item=item, showFeedTitle=not from_feed, showAuthor=True) }}
+            {{ itemView(item=item, showFeedTitle=not from_feed, showAuthor=True, showLikeButton=True) }}
         {% endfor %}
     </div>
     <footer>
         <div class="pages">
-            {% if from_feed %}
-            <a href="/list?feed={{ from_feed.id }}&offset={{ prev_page }}">← </a>
-            <a href="/list?feed={{ from_feed.id }}&offset={{ next_page }}">→ </a>
-            {% else %}
-            <a href="/list?offset={{ prev_page }}">← </a>
-            <a href="/list?offset={{ next_page }}">→ </a>
-            {% endif %}
+            <a href="{{ request | update_query('offset', prev_page) }}">← </a>
+            <a href="{{ request | update_query('offset', next_page) }}">→ </a>
         </div>
         <div class="foot">
             {{ navLinks() }}

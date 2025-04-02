@@ -43,7 +43,7 @@ h1 {
     margin-bottom: 0;
 }
 
-form {
+.new-feed form {
     margin-bottom: 1rem;
 }
 
@@ -181,4 +181,30 @@ dialog button {
     color: var(--color-foreground);
     background: var(--color-background);
     font-size: large;
+}
+
+.items-status-header {
+    font-size: small;
+    margin-bottom: 1rem;
+}
+
+.items-status-header a {
+    text-decoration: underline;
+}
+
+.like-button {
+    display: inline !important;
+    margin: 0;
+    padding: 0;
+    font-size: large;
+}
+
+.like-button button {
+    background: transparent;
+    color: var(--color-foreground);
+    border: none;
+}
+
+.like-button button:active {
+    outline: 1px solid var(--color-border);
 }

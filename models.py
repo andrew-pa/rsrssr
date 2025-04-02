@@ -21,7 +21,7 @@ class Feed(Base):
     etag = Column(String(128), nullable=True)
     modified = Column(String(128), nullable=True)
     last_updated = Column(DateTime, nullable=True)
-    downrank = Column(Boolean, nullable=False)
+    downrank = Column(Boolean, nullable=False, default=False)
     items = relationship(
         "Item", backref="feed", lazy=True, cascade="all, delete-orphan"
     )
@@ -35,7 +35,8 @@ class Item(Base):
     published = Column(DateTime, nullable=False, index=True)
     description = Column(Text, nullable=True)
     author = Column(String(128), nullable=True)
-    visited = Column(Boolean, nullable=False, default=False)
+    visited = Column(DateTime, nullable=True, index=True)
+    liked = Column(DateTime, nullable=True, index=True)
     feed_id = Column(Integer, ForeignKey("feed.id"), nullable=False, index=True)
 
 

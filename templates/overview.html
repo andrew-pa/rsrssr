@@ -12,7 +12,7 @@
         <a class="title" href="/list?feed={{ feed.id }}">{{feed.title}}</a>
         <div class="card-items">
         {% for item in feed['items'] %}
-            {{ itemView(item=item, showFeedTitle=False, showAuthor=False) }}
+            {{ itemView(item=item, showFeedTitle=False, showAuthor=False, showLikeButton=False) }}
         {% endfor %}
         </div>
     </div>
