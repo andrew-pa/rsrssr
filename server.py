@@ -1,4 +1,5 @@
-from flask import Flask, abort, render_template, request, redirect, url_for
+from urllib.parse import urlencode, urlunparse
+from flask import Flask, Request, abort, render_template, request, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 import plotly.io
 
@@ -11,6 +12,7 @@ from logic import (
     feed_list,
     record_visit,
     toggle_feed_downrank,
+    toggle_like,
 )
 from stats_plot import plot_update_stats_figure
 from models import Base
@@ -30,6 +32,17 @@ def format_date(value, format="%d %B %Y, %I:%M %p"):
     return value.strftime(format)
 
 
+@app.template_filter("update_query")
+def update_query(request: Request, key: str, value):
+    new_args = request.args.copy()
+    if value is None:
+        new_args.pop(key)
+    else:
+        new_args[key] = value
+    new_query = urlencode(new_args, doseq=True)
+    return f"{request.path}?{new_query}"
+
+
 @app.route("/")
 def page_overview():
     props = overview(db.session)
@@ -40,10 +53,13 @@ def page_overview():
 def page_item_list():
     offset = request.args.get("offset", default=0, type=int)
     specific_feed_id = request.args.get("feed", default=None, type=int)
+    item_state = request.args.get("k", default="all", type=str)
+    if item_state not in ("all", "visited", "liked"):
+        abort(400)
 
-    props = item_list(db.session, offset, specific_feed_id)
+    props = item_list(db.session, item_state, offset, specific_feed_id)
 
-    return render_template("index.html", **props)
+    return render_template("index.html", **props, request=request)
 
 
 @app.route("/feeds", methods=["GET", "POST"])
@@ -67,6 +83,16 @@ def visit_item():
         abort(400)
     record_visit(db.session, item_id)
     return ""
+
+
+@app.route("/like", methods=["POST"])
+def like_item():
+    item_id = request.args.get("id", type=int)
+    if not item_id:
+        abort(400)
+    toggle_like(db.session, item_id)
+    print(request.referrer)
+    return redirect(request.referrer or "/")
 
 
 @app.route("/stats")

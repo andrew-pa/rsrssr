@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Literal
 import time
 import math
 import sqlalchemy
@@ -29,14 +29,27 @@ def last_update_stats(session: scoped_session) -> UpdateStat | None:
 
 
 def item_list(
-    session: scoped_session, offset: int, specific_feed_id: int | None
+    session: scoped_session,
+    state: Literal["visited"] | Literal["liked"] | Literal["all"],
+    offset: int,
+    specific_feed_id: int | None,
 ) -> dict[str, Any]:
     start_time = time.time()
 
-    items_query = session.query(Item).order_by(Item.published.desc())
+    items_query = session.query(Item)
+
     if specific_feed_id:
         items_query = items_query.where(Item.feed_id == specific_feed_id)
-    items = items_query.offset(offset).limit(PAGE_SIZE).all()
+
+    match state:
+        case "all":
+            pass
+        case "visited":
+            items_query = items_query.where(Item.visited != None).order_by(Item.visited.desc())
+        case "liked":
+            items_query = items_query.where(Item.liked != None).order_by(Item.liked.desc())
+
+    items = items_query.order_by(Item.published.desc()).offset(offset).limit(PAGE_SIZE).all()
 
     last_stats = last_update_stats(session)
 
@@ -53,6 +66,7 @@ def item_list(
         "prev_page": offset - PAGE_SIZE if offset > PAGE_SIZE else 0,
         "next_page": offset + PAGE_SIZE,
         "from_feed": specific_feed,
+        "state_filter": state,
     }
 
 
@@ -76,7 +90,7 @@ def overview(session: scoped_session) -> dict[str, Any]:
             sqlalchemy.func.max(Item.published).label("last_published"),
             sqlalchemy.func.count(Item.id).label("item_count"),
         )
-        .filter(Item.published >= since_date, Item.visited == False)
+        .filter(Item.published >= since_date, Item.visited == None)
         .group_by(Item.feed_id)
         .subquery()
     )
@@ -97,7 +111,7 @@ def overview(session: scoped_session) -> dict[str, Any]:
             .filter(
                 Item.feed_id == feed.id,
                 Item.published >= since_date,
-                Item.visited == False,
+                Item.visited == None,
             )
             .order_by(Item.published.desc())
             .limit(OVERVIEW_ITEMS_PER_FEED)
@@ -105,7 +119,10 @@ def overview(session: scoped_session) -> dict[str, Any]:
         )
 
         top_item_age = (datetime.datetime.now() - recent_items[0].published).days
-        rank = math.cos(top_item_age * 2 * math.pi / 30) - top_item_age * 0.01
+        rank = (
+            math.cos(top_item_age * 2 * math.pi / OVERVIEW_NUM_DAYS_SINCE)
+            - top_item_age * 0.01
+        )
         if feed.downrank:
             rank -= 100
             recent_items = recent_items[0 : (OVERVIEW_ITEMS_PER_FEED // 2)]
@@ -173,8 +190,21 @@ def fetch_update_stats(session: scoped_session, timeframe: str) -> pd.DataFrame:
     )
 
 
+import datetime
+
+
 def record_visit(session: scoped_session, item_id: int):
     item = session.query(Item).get(item_id)
     if item:
-        item.visited = True
+        item.visited = datetime.datetime.now()
+    session.commit()
+
+
+def toggle_like(session: scoped_session, item_id: int):
+    item = session.query(Item).get(item_id)
+    if item:
+        if item.liked is None:
+            item.liked = datetime.datetime.now()
+        else:
+            item.liked = None
     session.commit()
