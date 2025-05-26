@@ -100,7 +100,8 @@ def like_item():
     toggle_like(db.session, item_id)
     print(request.referrer)
     return redirect(request.referrer or "/")
-    
+
+
 @app.route("/dismiss", methods=["POST"])
 def dismiss_item():
     """

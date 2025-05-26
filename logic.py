@@ -224,7 +224,8 @@ def toggle_like(session: scoped_session, item_id: int):
         else:
             item.liked = None
     session.commit()
-    
+
+
 def record_dismiss(session: scoped_session, item_id: int):
     """
     Mark the given item as dismissed by setting its dismissed timestamp.
