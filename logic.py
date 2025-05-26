@@ -45,11 +45,20 @@ def item_list(
         case "all":
             pass
         case "visited":
-            items_query = items_query.where(Item.visited != None).order_by(Item.visited.desc())
+            items_query = items_query.where(Item.visited != None).order_by(
+                Item.visited.desc()
+            )
         case "liked":
-            items_query = items_query.where(Item.liked != None).order_by(Item.liked.desc())
+            items_query = items_query.where(Item.liked != None).order_by(
+                Item.liked.desc()
+            )
 
-    items = items_query.order_by(Item.published.desc()).offset(offset).limit(PAGE_SIZE).all()
+    items = (
+        items_query.order_by(Item.published.desc())
+        .offset(offset)
+        .limit(PAGE_SIZE)
+        .all()
+    )
 
     last_stats = last_update_stats(session)
 
@@ -207,4 +216,13 @@ def toggle_like(session: scoped_session, item_id: int):
             item.liked = datetime.datetime.now()
         else:
             item.liked = None
+    session.commit()
+    
+def record_dismiss(session: scoped_session, item_id: int):
+    """
+    Mark the given item as dismissed by setting its dismissed timestamp.
+    """
+    item = session.query(Item).get(item_id)
+    if item:
+        item.dismissed = datetime.datetime.now()
     session.commit()
