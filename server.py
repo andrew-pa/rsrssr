@@ -16,6 +16,7 @@ from logic import (
 )
 from stats_plot import plot_update_stats_figure
 from models import Base
+from sqlalchemy import text
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///rss_feeds.db"
@@ -23,6 +24,11 @@ db = SQLAlchemy(app)
 
 with app.app_context():
     Base.metadata.create_all(bind=db.engine)
+    # Migrate: add dismissed column if it doesn't exist
+    with db.engine.connect() as conn:
+        existing = conn.execute(text("PRAGMA table_info('item')")).mappings().all()
+        if not any(row["name"] == "dismissed" for row in existing):
+            conn.execute(text("ALTER TABLE item ADD COLUMN dismissed DATETIME"))
 
 
 @app.template_filter("format_date")
