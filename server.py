@@ -17,6 +17,7 @@ from logic import (
 )
 from stats_plot import plot_update_stats_figure
 from models import Base
+from models import Item
 from sqlalchemy import text
 
 app = Flask(__name__)
@@ -127,6 +128,14 @@ def graph_update_stats():
 def send_static(path):
     return app.send_static_file(path)
 
+
+@app.route("/go/<int:item_id>")
+def go_to_item(item_id: int):
+    item = db.session.query(Item).get(item_id)
+    if not item:
+        abort(404)
+    record_visit(db.session, item_id)
+    return redirect(item.link)
 
 if __name__ == "__main__":
     app.run(debug=True)
