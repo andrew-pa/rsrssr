@@ -19,4 +19,5 @@ window.postDismiss = (itemId) => {
     fetch(`/dismiss?id=${itemId}`, { method: 'POST' })
         .then(() => { window.location.reload(); })
         .catch((err) => { console.error('Dismiss failed:', err); });
+    return false;
 };

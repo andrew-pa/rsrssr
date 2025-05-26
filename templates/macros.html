@@ -35,7 +35,7 @@
         <span>{{ item.published | format_date | default('unknown', true) }}</span>
         <a onclick="showDescriptionDialog({{ item.id }})">Details</a>
         {%- if showDismissButton %}
-        <a href="#" onclick="postDismiss({{ item.id }}); return false;" style="margin-left:0.5rem;">Dismiss</a>
+        <a href="#" onclick="postDismiss({{ item.id }})">Dismiss</a>
         {%- endif %}
         <dialog id="description-dialog-{{ item.id }}">
             <button onclick="closeDescriptionDialog({{ item.id }})">Close</button>
