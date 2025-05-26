@@ -13,9 +13,11 @@ from logic import (
     record_visit,
     toggle_feed_downrank,
     toggle_like,
+    record_dismiss,
 )
 from stats_plot import plot_update_stats_figure
 from models import Base
+from sqlalchemy import text
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///rss_feeds.db"
@@ -23,6 +25,11 @@ db = SQLAlchemy(app)
 
 with app.app_context():
     Base.metadata.create_all(bind=db.engine)
+    # Migrate: add dismissed column if it doesn't exist
+    with db.engine.connect() as conn:
+        existing = conn.execute(text("PRAGMA table_info('item')")).mappings().all()
+        if not any(row["name"] == "dismissed" for row in existing):
+            conn.execute(text("ALTER TABLE item ADD COLUMN dismissed DATETIME"))
 
 
 @app.template_filter("format_date")
@@ -92,6 +99,18 @@ def like_item():
         abort(400)
     toggle_like(db.session, item_id)
     print(request.referrer)
+    return redirect(request.referrer or "/")
+
+
+@app.route("/dismiss", methods=["POST"])
+def dismiss_item():
+    """
+    API endpoint to mark an item as dismissed.
+    """
+    item_id = request.args.get("id", type=int)
+    if not item_id:
+        abort(400)
+    record_dismiss(db.session, item_id)
     return redirect(request.referrer or "/")
 
 

@@ -45,11 +45,20 @@ def item_list(
         case "all":
             pass
         case "visited":
-            items_query = items_query.where(Item.visited != None).order_by(Item.visited.desc())
+            items_query = items_query.where(Item.visited != None).order_by(
+                Item.visited.desc()
+            )
         case "liked":
-            items_query = items_query.where(Item.liked != None).order_by(Item.liked.desc())
+            items_query = items_query.where(Item.liked != None).order_by(
+                Item.liked.desc()
+            )
 
-    items = items_query.order_by(Item.published.desc()).offset(offset).limit(PAGE_SIZE).all()
+    items = (
+        items_query.order_by(Item.published.desc())
+        .offset(offset)
+        .limit(PAGE_SIZE)
+        .all()
+    )
 
     last_stats = last_update_stats(session)
 
@@ -84,13 +93,18 @@ def overview(session: scoped_session) -> dict[str, Any]:
     )
 
     # Subquery to get the maximum published date and count of items for each feed
+    # Exclude visited or dismissed items from overview
     subquery = (
         session.query(
             Item.feed_id,
             sqlalchemy.func.max(Item.published).label("last_published"),
             sqlalchemy.func.count(Item.id).label("item_count"),
         )
-        .filter(Item.published >= since_date, Item.visited == None)
+        .filter(
+            Item.published >= since_date,
+            Item.visited == None,
+            Item.dismissed == None,
+        )
         .group_by(Item.feed_id)
         .subquery()
     )
@@ -106,12 +120,14 @@ def overview(session: scoped_session) -> dict[str, Any]:
     items_by_feed = []
 
     for feed in feeds_with_max:
+        # Fetch recent items excluding visited or dismissed
         recent_items = (
             session.query(Item)
             .filter(
                 Item.feed_id == feed.id,
                 Item.published >= since_date,
                 Item.visited == None,
+                Item.dismissed == None,
             )
             .order_by(Item.published.desc())
             .limit(OVERVIEW_ITEMS_PER_FEED)
@@ -207,4 +223,14 @@ def toggle_like(session: scoped_session, item_id: int):
             item.liked = datetime.datetime.now()
         else:
             item.liked = None
+    session.commit()
+
+
+def record_dismiss(session: scoped_session, item_id: int):
+    """
+    Mark the given item as dismissed by setting its dismissed timestamp.
+    """
+    item = session.query(Item).get(item_id)
+    if item:
+        item.dismissed = datetime.datetime.now()
     session.commit()

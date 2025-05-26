@@ -14,3 +14,10 @@ window.closeDescriptionDialog = (itemId) => {
         dialog.close();
     }
 };
+// Send a POST to dismiss the item, then reload the page
+window.postDismiss = (itemId) => {
+    fetch(`/dismiss?id=${itemId}`, { method: 'POST' })
+        .then(() => { window.location.reload(); })
+        .catch((err) => { console.error('Dismiss failed:', err); });
+    return false;
+};

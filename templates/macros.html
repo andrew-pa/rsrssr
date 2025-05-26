@@ -7,9 +7,9 @@
     <script src="/static/item.mjs" type="module"></script>
 {% endmacro %}
 
-{% macro itemView(item, showFeedTitle, showAuthor, showLikeButton) %}
+{% macro itemView(item, showFeedTitle, showAuthor, showLikeButton, showDismissButton=False) %}
 <div class="feed-item">
-    <a href="{{ item.link }}" class="{% if item.visited %}visited-item{% endif %}" target="_blank" onclick="postVisit({{ item.id }})">{{ item.title }}</a>
+    <a href="{{ item.link }}" class="{% if item.dismissed %}dismissed-item{% elif item.visited %}visited-item{% endif %}" target="_blank" onclick="postVisit({{ item.id }})">{{ item.title }}</a>
     <div class="item-info">
         {% if showLikeButton %}
         <form class="like-button" method="POST" action="/like?id={{item.id}}">
@@ -34,6 +34,9 @@
         {% if item.author and showAuthor %}—{% endif %}
         <span>{{ item.published | format_date | default('unknown', true) }}</span>
         <a onclick="showDescriptionDialog({{ item.id }})">Details</a>
+        {%- if showDismissButton %}
+        <a href="#" onclick="postDismiss({{ item.id }})">Dismiss</a>
+        {%- endif %}
         <dialog id="description-dialog-{{ item.id }}">
             <button onclick="closeDescriptionDialog({{ item.id }})">Close</button>
             <h1>{{item.title}}</h1>

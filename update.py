@@ -3,13 +3,19 @@ import feedparser
 from statistics import mean, stdev
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from models import Base, Item, Feed, UpdateStat
 
 engine = create_engine("sqlite:///instance/rss_feeds.db")
 
 Base.metadata.create_all(engine)
+
+# Migrate: add dismissed column if it doesn't exist
+with engine.connect() as conn:
+    existing = conn.execute(text("PRAGMA table_info('item')")).mappings().all()
+    if not any(row["name"] == "dismissed" for row in existing):
+        conn.execute(text("ALTER TABLE item ADD COLUMN dismissed DATETIME"))
 
 Session = sessionmaker(bind=engine)
 

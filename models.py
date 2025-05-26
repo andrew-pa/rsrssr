@@ -37,6 +37,7 @@ class Item(Base):
     author = Column(String(128), nullable=True)
     visited = Column(DateTime, nullable=True, index=True)
     liked = Column(DateTime, nullable=True, index=True)
+    dismissed = Column(DateTime, nullable=True, index=True)
     feed_id = Column(Integer, ForeignKey("feed.id"), nullable=False, index=True)
 
 
