@@ -9,7 +9,7 @@
 
 {% macro itemView(item, showFeedTitle, showAuthor, showLikeButton, showDismissButton=False) %}
 <div class="feed-item">
-    <a href="{{ item.link }}" class="{% if item.visited %}visited-item{% endif %}" target="_blank" onclick="postVisit({{ item.id }})">{{ item.title }}</a>
+    <a href="{{ item.link }}" class="{% if item.dismissed %}dismissed-item{% elif item.visited %}visited-item{% endif %}" target="_blank" onclick="postVisit({{ item.id }})">{{ item.title }}</a>
     <div class="item-info">
         {% if showLikeButton %}
         <form class="like-button" method="POST" action="/like?id={{item.id}}">

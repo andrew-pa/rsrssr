@@ -75,6 +75,11 @@ a.visited-item {
     color: var(--color-visited);
     text-decoration: underline var(--color-subtle);
 }
+/* Style for dismissed items: gray italic text */
+a.dismissed-item, a.dismissed-item:visited {
+    color: var(--color-visited);
+    font-style: italic;
+}
 
 .feed-item {
     margin-bottom: 0.5rem;
