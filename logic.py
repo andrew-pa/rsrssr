@@ -93,13 +93,18 @@ def overview(session: scoped_session) -> dict[str, Any]:
     )
 
     # Subquery to get the maximum published date and count of items for each feed
+    # Exclude visited or dismissed items from overview
     subquery = (
         session.query(
             Item.feed_id,
             sqlalchemy.func.max(Item.published).label("last_published"),
             sqlalchemy.func.count(Item.id).label("item_count"),
         )
-        .filter(Item.published >= since_date, Item.visited == None)
+        .filter(
+            Item.published >= since_date,
+            Item.visited == None,
+            Item.dismissed == None,
+        )
         .group_by(Item.feed_id)
         .subquery()
     )
@@ -115,12 +120,14 @@ def overview(session: scoped_session) -> dict[str, Any]:
     items_by_feed = []
 
     for feed in feeds_with_max:
+        # Fetch recent items excluding visited or dismissed
         recent_items = (
             session.query(Item)
             .filter(
                 Item.feed_id == feed.id,
                 Item.published >= since_date,
                 Item.visited == None,
+                Item.dismissed == None,
             )
             .order_by(Item.published.desc())
             .limit(OVERVIEW_ITEMS_PER_FEED)
