@@ -234,3 +234,17 @@ def record_dismiss(session: scoped_session, item_id: int):
     if item:
         item.dismissed = datetime.datetime.now()
     session.commit()
+
+
+def unvisited_items_after(session: scoped_session, since_date: datetime.datetime):
+    """Return unvisited and not dismissed items newer than ``since_date``."""
+    return (
+        session.query(Item)
+        .filter(
+            Item.published >= since_date,
+            Item.visited == None,
+            Item.dismissed == None,
+        )
+        .order_by(Item.published.desc())
+        .all()
+    )
