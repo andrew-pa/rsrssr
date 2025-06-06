@@ -6,7 +6,7 @@ import sqlalchemy
 import datetime
 import pandas as pd
 
-from sqlalchemy.orm import scoped_session
+from sqlalchemy.orm import scoped_session, joinedload
 
 from update import update_feed
 
@@ -240,6 +240,7 @@ def unvisited_items_after(session: scoped_session, since_date: datetime.datetime
     """Return unvisited and not dismissed items newer than ``since_date``."""
     return (
         session.query(Item)
+        .options(joinedload(Item.feed))
         .filter(
             Item.published >= since_date,
             Item.visited == None,

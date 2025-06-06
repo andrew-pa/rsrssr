@@ -144,7 +144,7 @@ def api_unvisited_items():
             {
                 "id": item.id,
                 "url": item.link,
-                "title": item.title,
+                "feedName": item.feed.title,
                 "published": item.published.isoformat(),
             }
             for item in items
