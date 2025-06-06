@@ -1,7 +1,17 @@
 from urllib.parse import urlencode, urlunparse
-from flask import Flask, Request, abort, render_template, request, redirect, url_for
+from flask import (
+    Flask,
+    Request,
+    abort,
+    render_template,
+    request,
+    redirect,
+    url_for,
+    jsonify,
+)
 from flask_sqlalchemy import SQLAlchemy
 import plotly.io
+import datetime
 
 from logic import (
     add_feed,
@@ -14,6 +24,7 @@ from logic import (
     toggle_feed_downrank,
     toggle_like,
     record_dismiss,
+    unvisited_items_after,
 )
 from stats_plot import plot_update_stats_figure
 from models import Base
@@ -115,6 +126,32 @@ def dismiss_item():
     return redirect(request.referrer or "/")
 
 
+@app.route("/api/unvisited")
+def api_unvisited_items():
+    """Return unvisited and not dismissed items newer than a given date."""
+    date_str = request.args.get("after")
+    if not date_str:
+        abort(400)
+    try:
+        since_date = datetime.datetime.fromisoformat(date_str)
+    except ValueError:
+        abort(400)
+
+    items = unvisited_items_after(db.session, since_date)
+
+    return jsonify(
+        [
+            {
+                "id": item.id,
+                "url": item.link,
+                "feedName": item.feed.title,
+                "published": item.published.isoformat(),
+            }
+            for item in items
+        ]
+    )
+
+
 @app.route("/stats")
 def graph_update_stats():
     timeframe = request.args.get("window", default="week", type=str)
@@ -136,6 +173,7 @@ def go_to_item(item_id: int):
         abort(404)
     record_visit(db.session, item_id)
     return redirect(item.link)
+
 
 if __name__ == "__main__":
     app.run(debug=True)
