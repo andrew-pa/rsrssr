@@ -1,4 +1,6 @@
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
 import feedparser
 from statistics import mean, stdev
 from datetime import datetime, timedelta
@@ -51,7 +53,8 @@ def update_feed(session, feed):
             "cache_miss": False,
         }
     session.add(feed)
-    feed.title = data.feed.get("title", feed.title or feed.url)
+    if not feed.title:
+        feed.title = data.feed.get("title", feed.title or feed.url)
     feed.etag = data.get("etag", None)
     feed.modified = data.get("modified", None)
     feed.last_updated = datetime.now()
@@ -92,27 +95,62 @@ def update_feed(session, feed):
     }
 
 
-def update_feeds(session):
+def should_skip_feed(feed, now):
+    return (
+        feed.etag is None
+        and feed.modified is None
+        and feed.last_updated is not None
+        and abs(feed.last_updated - now) < timedelta(hours=6)
+    )
+
+
+def update_feeds(session, *, update_fn=update_feed, max_workers=None):
     timestamp = datetime.now()
     start_time = time.time()
     num_failed = 0
     feeds = session.query(Feed).all()
     feed_update_stats = []
     print(f"updating {len(feeds)} feeds")
-    for feed in feeds:
-        # only update uncached feeds every 6 hours
-        if (
-            feed.etag is None
-            and feed.modified is None
-            and feed.last_updated is not None
-            and abs(feed.last_updated - datetime.now()) < timedelta(hours=6)
-        ):
-            continue
+    now = datetime.now()
+    feeds_to_update = [feed for feed in feeds if not should_skip_feed(feed, now)]
+    feed_lookup = {feed.id: feed for feed in feeds}
+    session_bind = session.get_bind()
+    if session_bind is None:
+        raise RuntimeError("Session is not bound to an engine")
+    worker_session_factory = sessionmaker(bind=session_bind)
+
+    def process_feed(feed_id):
+        worker_session = worker_session_factory()
         try:
-            feed_update_stats.append(update_feed(session, feed))
-        except Exception as e:
-            print(f"failed to load feed #{feed.id} ({feed.url}): {e}")
-            num_failed += 1
+            feed = worker_session.get(Feed, feed_id)
+            if feed is None:
+                return None
+            stats = update_fn(worker_session, feed)
+            worker_session.commit()
+            return stats
+        except Exception:
+            worker_session.rollback()
+            raise
+        finally:
+            worker_session.close()
+
+    if feeds_to_update:
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            future_map = {
+                executor.submit(process_feed, feed.id): feed.id for feed in feeds_to_update
+            }
+            for future in as_completed(future_map):
+                feed_id = future_map[future]
+                try:
+                    stats = future.result()
+                except Exception as e:
+                    feed = feed_lookup.get(feed_id)
+                    url = feed.url if feed else "<unknown>"
+                    print(f"failed to load feed #{feed_id} ({url}): {e}")
+                    num_failed += 1
+                else:
+                    if stats is not None:
+                        feed_update_stats.append(stats)
     session.commit()
     end_time = time.time()
     min_feed_stat = min(feed_update_stats, key=lambda s: s["dur"], default=None)
