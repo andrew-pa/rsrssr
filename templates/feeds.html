@@ -28,14 +28,16 @@
         {% for feed in feeds %}
             <tr>
                 <td>
-                    <div class="feed-title-editor" style="display:flex; flex-direction:column; align-items:flex-start; gap:0.25rem;">
-                        <a href="/list?feed={{feed.id}}">{{ feed.title | default("Unknown", true) }}</a>
+                    <details class="feed-title-editor" style="display:flex; flex-direction:column; align-items:flex-start; gap:0.25rem;">
+                        <summary>
+                            <a href="/list?feed={{feed.id}}">{{ feed.title | default("Unknown", true) }}</a>
+                        </summary>
                         <form method="POST" class="edit-feed-title" style="display:flex; gap:0.25rem; align-items:center;">
                             <input type="hidden" name="feed_id" value="{{ feed.id }}">
                             <input type="text" name="title" value="{{ feed.title or '' }}" placeholder="Feed title" aria-label="Feed title">
                             <button type="submit">Save</button>
                         </form>
-                    </div>
+                    </details>
                 </td>
                 <td>
                     <a href="{{feed.url}}">{{ feed.url }}</a>
