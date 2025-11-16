@@ -12,6 +12,7 @@ from flask import (
 from flask_sqlalchemy import SQLAlchemy
 import plotly.io
 import datetime
+from config import database_uri
 
 from logic import (
     add_feed,
@@ -33,7 +34,7 @@ from models import Item
 from sqlalchemy import text
 
 app = Flask(__name__)
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///rss_feeds.db"
+app.config["SQLALCHEMY_DATABASE_URI"] = database_uri()
 db = SQLAlchemy(app)
 
 with app.app_context():

@@ -8,8 +8,9 @@ from dateutil.relativedelta import relativedelta
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from models import Base, Item, Feed, UpdateStat
+from config import database_uri
 
-engine = create_engine("sqlite:///instance/rss_feeds.db")
+engine = create_engine(database_uri())
 
 Base.metadata.create_all(engine)
 

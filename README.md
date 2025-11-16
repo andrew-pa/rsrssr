@@ -13,7 +13,7 @@ RSRSSR only supports a single user, so there is no authentication/authorization 
 
 ## Data Storage
 
-The application uses SQLite to store data. The database includes tables for feeds, items, and update statistics. SQLAlchemy is used as the ORM to interact with the database.
+The application uses SQLite to store data. The database includes tables for feeds, items, and update statistics. SQLAlchemy is used as the ORM to interact with the database. The database location can be overridden via the `RSRSSR_DB_PATH` environment variable (defaults to `instance/rss_feeds.db`).
 
 ## Running the Server Locally
 
@@ -74,6 +74,36 @@ The application uses SQLite to store data. The database includes tables for feed
     ```
 
     The update script needs to be run periodically to fetch new items for all feeds. It shouldn't run more than once an hour, as each time it runs it will make a request for each feed. We do attempt to correctly implement caching to prevent unnecessary load on the feed servers.
+
+## Deploying on Google Cloud
+
+Terraform configuration is provided in the `terraform/` directory to deploy RSRSSR in a low-cost, serverless architecture:
+
+- **Cloud Run service** for the Flask web UI. A Cloud Storage bucket is mounted into the service via Cloud Storage FUSE so the SQLite database (`/data/rss_feeds.db`) is persisted in GCS.
+- **Cloud Run job** for `update.py`. It uses the same container image and bucket mount, and Cloud Scheduler triggers it every six hours (4× daily) via an authenticated HTTP call.
+- **Artifact Registry** for storing container images and a dedicated service account with the minimal IAM roles required for Cloud Run, Cloud Scheduler, and bucket access.
+
+To deploy:
+
+1. **Build the container image** using the provided `Dockerfile` and tag it for Artifact Registry. Example:
+   ```bash
+   REGION=us-central1
+   PROJECT_ID=my-project
+   IMAGE="$REGION-docker.pkg.dev/$PROJECT_ID/rsrssr/rsrssr:latest"
+   docker build -t "$IMAGE" .
+   docker push "$IMAGE"
+   ```
+
+2. **Configure Terraform**. Copy `terraform/terraform.tfvars.example` to `terraform/terraform.tfvars`, set `project_id`, `region`, and (optionally) `container_image` if you pushed a custom tag.
+
+3. **Apply the infrastructure**:
+   ```bash
+   cd terraform
+   terraform init
+   terraform apply
+   ```
+
+Terraform outputs the public Cloud Run URL and the name of the Cloud Storage bucket that stores the SQLite file. Because the bucket is mounted directly into both the web service and the update job, database changes made from the UI are immediately persisted to GCS, and the update job flushes new feed content after each run.
 
 ## Source Code Overview
 
