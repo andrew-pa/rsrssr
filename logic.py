@@ -180,6 +180,17 @@ def toggle_feed_downrank(session: scoped_session, id: int):
     session.commit()
 
 
+def update_feed_title(session: scoped_session, id: int, title: str | None) -> bool:
+    feed = session.query(Feed).get(id)
+    if feed is None:
+        return False
+
+    normalized = (title or "").strip()
+    feed.title = normalized or None
+    session.commit()
+    return True
+
+
 def feed_list(session: scoped_session):
     feeds = session.query(Feed).order_by(Feed.last_updated.desc()).all()
     return {"feeds": feeds}

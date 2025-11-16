@@ -22,6 +22,7 @@ from logic import (
     feed_list,
     record_visit,
     toggle_feed_downrank,
+    update_feed_title,
     toggle_like,
     record_dismiss,
     unvisited_items_after,
@@ -88,6 +89,12 @@ def page_manage_feeds():
             delete_feed(db.session, int(request.form["delete"]))
         elif "downrank" in request.form:
             toggle_feed_downrank(db.session, int(request.form["downrank"]))
+        elif "feed_id" in request.form:
+            update_feed_title(
+                db.session,
+                int(request.form["feed_id"]),
+                request.form.get("title", ""),
+            )
         else:
             add_feed(db.session, request.form["url"])
         return redirect(url_for("page_manage_feeds"))
