@@ -53,7 +53,8 @@ def update_feed(session, feed):
             "cache_miss": False,
         }
     session.add(feed)
-    feed.title = data.feed.get("title", feed.title or feed.url)
+    if not feed.title:
+        feed.title = data.feed.get("title", feed.title or feed.url)
     feed.etag = data.get("etag", None)
     feed.modified = data.get("modified", None)
     feed.last_updated = datetime.now()
