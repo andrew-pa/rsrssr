@@ -5,6 +5,10 @@ terraform {
       source  = "hashicorp/google"
       version = "~> 5.33"
     }
+    google-beta = {
+      source  = "hashicorp/google-beta"
+      version = "~> 5.33"
+    }
   }
 }
 
@@ -13,8 +17,12 @@ provider "google" {
   region  = var.region
 }
 
+provider "google-beta" {
+  project = var.project_id
+  region  = var.region
+}
 locals {
-  labels = merge({ app = "rsrssr" }, var.labels)
+  labels            = merge({ app = "rsrssr" }, var.labels)
   artifact_location = var.artifact_registry_location != "" ? var.artifact_registry_location : var.region
 }
 
@@ -94,9 +102,9 @@ resource "google_cloud_run_v2_service" "web" {
   labels   = local.labels
 
   template {
-    service_account        = google_service_account.app.email
-    execution_environment  = "GEN2"
-    timeout                = "60s"
+    service_account       = google_service_account.app.email
+    execution_environment = "EXECUTION_ENVIRONMENT_GEN2"
+    timeout               = "60s"
 
     scaling {
       min_instance_count = 0
@@ -113,10 +121,6 @@ resource "google_cloud_run_v2_service" "web" {
           cpu    = "1"
           memory = "512Mi"
         }
-      }
-      env {
-        name  = "PORT"
-        value = "8080"
       }
       env {
         name  = "RSRSSR_DB_PATH"
@@ -150,16 +154,17 @@ resource "google_cloud_run_v2_service_iam_member" "public" {
 }
 
 resource "google_cloud_run_v2_job" "update" {
+  provider = google-beta
   name     = var.job_name
   location = var.region
   labels   = local.labels
 
   template {
-    parallelism  = 1
-    task_count   = 1
+    parallelism = 1
+    task_count  = 1
     template {
       service_account       = google_service_account.app.email
-      execution_environment = "GEN2"
+      execution_environment = "EXECUTION_ENVIRONMENT_GEN2"
       timeout               = "1200s"
       max_retries           = 1
 
