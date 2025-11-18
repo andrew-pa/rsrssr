@@ -10,6 +10,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 ENV PORT=8080 \
-    RSRSSR_DB_PATH=/data/rss_feeds.db
+    RSRSSR_DB_PATH=/tmp/rsrssr/rss_feeds.db
 
 CMD ["gunicorn", "--bind", "0.0.0.0:8080", "server:app"]

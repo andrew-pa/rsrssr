@@ -124,18 +124,11 @@ resource "google_cloud_run_v2_service" "web" {
       }
       env {
         name  = "RSRSSR_DB_PATH"
-        value = "/data/rss_feeds.db"
+        value = "/tmp/rsrssr/rss_feeds.db"
       }
-      volume_mounts {
-        name       = "database"
-        mount_path = "/data"
-      }
-    }
-
-    volumes {
-      name = "database"
-      gcs {
-        bucket = google_storage_bucket.db.name
+      env {
+        name  = "RSRSSR_DB_GCS_URI"
+        value = "gs://${google_storage_bucket.db.name}/rss_feeds.db"
       }
     }
   }
@@ -173,24 +166,17 @@ resource "google_cloud_run_v2_job" "update" {
         command = ["python", "update.py"]
         env {
           name  = "RSRSSR_DB_PATH"
-          value = "/data/rss_feeds.db"
+          value = "/tmp/rsrssr/rss_feeds.db"
         }
-        volume_mounts {
-          name       = "database"
-          mount_path = "/data"
+        env {
+          name  = "RSRSSR_DB_GCS_URI"
+          value = "gs://${google_storage_bucket.db.name}/rss_feeds.db"
         }
         resources {
           limits = {
             cpu    = "1"
             memory = "512Mi"
           }
-        }
-      }
-
-      volumes {
-        name = "database"
-        gcs {
-          bucket = google_storage_bucket.db.name
         }
       }
     }

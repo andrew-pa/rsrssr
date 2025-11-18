@@ -10,9 +10,11 @@ from flask import (
     jsonify,
 )
 from flask_sqlalchemy import SQLAlchemy
+from flask_sqlalchemy.session import Session as FlaskSession
 import plotly.io
 import datetime
-from config import database_uri
+from config import database_uri, database_session_class, database_mirror
+from db_mirror import StaleDatabaseError
 
 from logic import (
     add_feed,
@@ -35,15 +37,30 @@ from sqlalchemy import text
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = database_uri()
-db = SQLAlchemy(app)
+db = SQLAlchemy(app, session_options={"class_": database_session_class(FlaskSession)})
+mirror = database_mirror()
 
 with app.app_context():
+    snapshot = mirror.snapshot_local_state()
     Base.metadata.create_all(bind=db.engine)
+    mirror.mark_dirty_if_changed(snapshot)
     # Migrate: add dismissed column if it doesn't exist
     with db.engine.connect() as conn:
         existing = conn.execute(text("PRAGMA table_info('item')")).mappings().all()
         if not any(row["name"] == "dismissed" for row in existing):
             conn.execute(text("ALTER TABLE item ADD COLUMN dismissed DATETIME"))
+            mirror.mark_dirty()
+    mirror.sync_if_needed(reason="startup migrations")
+
+
+@app.after_request
+def sync_database(response):
+    try:
+        mirror.sync_if_needed(reason="request complete")
+    except StaleDatabaseError as exc:
+        app.logger.critical("Database sync failed: %s", exc)
+        raise
+    return response
 
 
 @app.template_filter("format_date")

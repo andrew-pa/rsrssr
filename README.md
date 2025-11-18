@@ -13,7 +13,7 @@ RSRSSR only supports a single user, so there is no authentication/authorization 
 
 ## Data Storage
 
-The application uses SQLite to store data. The database includes tables for feeds, items, and update statistics. SQLAlchemy is used as the ORM to interact with the database. The database location can be overridden via the `RSRSSR_DB_PATH` environment variable (defaults to `instance/rss_feeds.db`).
+The application uses SQLite to store data. The database includes tables for feeds, items, and update statistics. SQLAlchemy is used as the ORM to interact with the database. The on-disk location can be overridden via the `RSRSSR_DB_PATH` environment variable (defaults to `instance/rss_feeds.db`), and Cloud deployments can mirror the file to Google Cloud Storage by pointing `RSRSSR_DB_GCS_URI` at a `gs://` object.
 
 ## Running the Server Locally
 
@@ -75,12 +75,19 @@ The application uses SQLite to store data. The database includes tables for feed
 
     The update script needs to be run periodically to fetch new items for all feeds. It shouldn't run more than once an hour, as each time it runs it will make a request for each feed. We do attempt to correctly implement caching to prevent unnecessary load on the feed servers.
 
+## Database Storage
+
+The application stores its state in a SQLite database. By default the file lives under `instance/rss_feeds.db`, but two environment variables control where the data is read from and how it is persisted:
+
+- `RSRSSR_DB_PATH` — Absolute path to the local SQLite file. In Cloud Run we keep the file inside `/tmp/rsrssr/rss_feeds.db` so all reads and writes happen on the container's in-memory filesystem.
+- `RSRSSR_DB_GCS_URI` — Optional `gs://bucket/object` URI. When set, the service downloads the database blob into `RSRSSR_DB_PATH` at startup and uploads it back to Cloud Storage whenever changes are committed (after each web request and when the update job completes). Uploads use the blob's generation number via `if_generation_match` so we never clobber a newer copy that was written by another process.
+
 ## Deploying on Google Cloud
 
 Terraform configuration is provided in the `terraform/` directory to deploy RSRSSR in a low-cost, serverless architecture:
 
-- **Cloud Run service** for the Flask web UI. A Cloud Storage bucket is mounted into the service via Cloud Storage FUSE so the SQLite database (`/data/rss_feeds.db`) is persisted in GCS.
-- **Cloud Run job** for `update.py`. It uses the same container image and bucket mount, and Cloud Scheduler triggers it every six hours (4× daily) via an authenticated HTTP call.
+- **Cloud Run service** for the Flask web UI. The container writes to `/tmp/rsrssr/rss_feeds.db` and uses the Cloud Storage JSON API (via `google-cloud-storage`) to pull/push the database blob with optimistic concurrency control.
+- **Cloud Run job** for `update.py`. It shares the same image and database sync logic, and Cloud Scheduler triggers it every six hours (4× daily) via an authenticated HTTP call.
 - **Artifact Registry** for storing container images and a dedicated service account with the minimal IAM roles required for Cloud Run, Cloud Scheduler, and bucket access.
 
 To deploy:
@@ -103,7 +110,7 @@ To deploy:
    terraform apply
    ```
 
-Terraform outputs the public Cloud Run URL and the name of the Cloud Storage bucket that stores the SQLite file. Because the bucket is mounted directly into both the web service and the update job, database changes made from the UI are immediately persisted to GCS, and the update job flushes new feed content after each run.
+Terraform outputs the public Cloud Run URL and the name of the Cloud Storage bucket that stores the SQLite file. Both the web service and the update job use the same object URI exposed via `RSRSSR_DB_GCS_URI`, so user actions and feed updates are mirrored back to Cloud Storage with generation checks to prevent overwriting concurrent writes.
 
 ## Source Code Overview
 
