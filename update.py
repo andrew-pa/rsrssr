@@ -8,18 +8,22 @@ from dateutil.relativedelta import relativedelta
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from models import Base, Item, Feed, UpdateStat
+from config import database_uri, database_session_class, database_mirror
 
-engine = create_engine("sqlite:///instance/rss_feeds.db")
-
+engine = create_engine(database_uri())
+mirror = database_mirror()
+snapshot = mirror.snapshot_local_state()
 Base.metadata.create_all(engine)
+mirror.mark_dirty_if_changed(snapshot)
 
 # Migrate: add dismissed column if it doesn't exist
 with engine.connect() as conn:
     existing = conn.execute(text("PRAGMA table_info('item')")).mappings().all()
     if not any(row["name"] == "dismissed" for row in existing):
         conn.execute(text("ALTER TABLE item ADD COLUMN dismissed DATETIME"))
+        mirror.mark_dirty()
 
-Session = sessionmaker(bind=engine)
+Session = sessionmaker(bind=engine, class_=database_session_class())
 
 
 def datetime_from_time(t):
@@ -186,4 +190,5 @@ if __name__ == "__main__":
     print(f"update took {stats.dur_total}s")
     session.add(stats)
     session.commit()
+    mirror.sync_if_needed(reason="update job complete")
     print("finished!")

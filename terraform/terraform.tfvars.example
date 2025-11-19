@@ -1,0 +1,6 @@
+project_id = "my-project-id"
+region     = "us-central1"
+
+# Optional overrides
+# container_image = "us-central1-docker.pkg.dev/my-project-id/rsrssr/rsrssr:latest"
+# db_bucket_name  = "my-custom-rsrssr-db"
