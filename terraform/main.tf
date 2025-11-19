@@ -202,7 +202,7 @@ resource "google_cloud_scheduler_job" "update" {
 
   http_target {
     http_method = "POST"
-    uri         = "https://${var.region}-run.googleapis.com/apis/run.googleapis.com/v1/${google_cloud_run_v2_job.update.name}:run"
+    uri         = "https://run.googleapis.com/v2/${google_cloud_run_v2_job.update.id}:run"
     body        = base64encode("{}")
 
     oauth_token {
